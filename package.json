@@ -1,0 +1,71 @@
+{
+  "name": "create-karetech-stack",
+  "version": "0.0.1",
+  "description": "Enhanced Better-T-Stack scaffold with PBS, testing, and DevOps built-in",
+  "type": "module",
+  "bin": {
+    "create-karetech-stack": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "format": "prettier --write .",
+    "prepublishOnly": "bun run build"
+  },
+  "keywords": [
+    "scaffold",
+    "better-t-stack",
+    "typescript",
+    "bun",
+    "hono",
+    "drizzle",
+    "tanstack",
+    "shadcn",
+    "cli",
+    "generator"
+  ],
+  "author": {
+    "name": "Kareem Schultz",
+    "email": "kareem@karetech.gy",
+    "url": "https://github.com/kareemschultz"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kareemschultz/karetech-stack.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kareemschultz/karetech-stack/issues"
+  },
+  "homepage": "https://github.com/kareemschultz/karetech-stack#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "commander": "^12.1.0",
+    "ejs": "^3.1.10",
+    "fs-extra": "^11.2.0",
+    "picocolors": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.0",
+    "@types/ejs": "^3.1.5",
+    "@types/fs-extra": "^11.0.4",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.0",
+    "typescript": "^5.4.0"
+  },
+  "files": [
+    "dist",
+    "templates",
+    "README.md",
+    "LICENSE"
+  ]
+}

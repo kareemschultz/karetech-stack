@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(bun:*)",
+      "Bash(git:*)",
+      "Bash(npm:*)",
+      "Bash(bunx:*)",
+      "Bash(bd:*)",
+      "Bash(specify:*)",
+      "Read(*)",
+      "Write(src/**)",
+      "Write(templates/**)",
+      "Write(docs/**)",
+      "Write(scripts/**)",
+      "Write(.github/**)"
+    ],
+    "deny": [
+      "Write(constitution.md)",
+      "Write(.beads/beads.db)"
+    ]
+  },
+  "model": "claude-sonnet-4-20250514"
+}
