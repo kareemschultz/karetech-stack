@@ -8,8 +8,51 @@
 import { intro, outro, text, select, confirm, spinner, isCancel, cancel, multiselect } from '@clack/prompts';
 import { Command } from 'commander';
 import pc from 'picocolors';
+import { existsSync } from 'fs';
+import { resolve } from 'path';
+import { execSync } from 'child_process';
 
 const VERSION = '0.0.1';
+
+// Reserved project names that should not be used
+const RESERVED_NAMES = [
+  'node_modules', 'dist', 'build', '.git', '.next', '.nuxt', '.vite',
+  'public', 'src', 'lib', 'app', 'pages', 'components', 'utils', 'types',
+  'config', 'server', 'client', 'api', 'test', 'tests', '__tests__',
+  'docs', 'doc', 'documentation', 'readme', 'license', 'changelog',
+  'package', 'yarn', 'npm', 'pnpm', 'bun', 'node', 'deno',
+  'react', 'next', 'vue', 'svelte', 'angular', 'typescript', 'javascript',
+  'con', 'prn', 'aux', 'nul', // Windows reserved names
+  'com1', 'com2', 'com3', 'com4', 'com5', 'com6', 'com7', 'com8', 'com9',
+  'lpt1', 'lpt2', 'lpt3', 'lpt4', 'lpt5', 'lpt6', 'lpt7', 'lpt8', 'lpt9'
+];
+
+// Validation functions
+function validateProjectName(value: string): string | void {
+  if (!value) return 'Project name is required';
+  if (value.length < 2) return 'Project name must be at least 2 characters';
+  if (value.length > 50) return 'Project name must be less than 50 characters';
+  if (!/^[a-z0-9-]+$/.test(value)) return 'Use lowercase letters, numbers, and hyphens only';
+  if (value.startsWith('-') || value.endsWith('-')) return 'Project name cannot start or end with a hyphen';
+  if (value.includes('--')) return 'Project name cannot contain consecutive hyphens';
+  if (RESERVED_NAMES.includes(value.toLowerCase())) return `"${value}" is a reserved name, please choose another`;
+
+  // Check if directory already exists
+  const projectPath = resolve(process.cwd(), value);
+  if (existsSync(projectPath)) return `Directory "${value}" already exists in current location`;
+}
+
+function validateDescription(value: string): string | void {
+  if (!value) return 'Project description is required';
+  if (value.length < 3) return 'Description must be at least 3 characters';
+  if (value.length > 200) return 'Description must be less than 200 characters';
+}
+
+function validateAuthor(value: string): string | void {
+  if (!value) return 'Author name is required';
+  if (value.length < 2) return 'Author name must be at least 2 characters';
+  if (value.length > 50) return 'Author name must be less than 50 characters';
+}
 
 // Configuration interfaces
 interface ProjectConfig {
@@ -249,10 +292,7 @@ async function main() {
   const projectName = args[0] || await text({
     message: 'What is your project name?',
     placeholder: 'my-awesome-app',
-    validate: (value) => {
-      if (!value) return 'Project name is required';
-      if (!/^[a-z0-9-]+$/.test(value)) return 'Use lowercase letters, numbers, and hyphens only';
-    },
+    validate: validateProjectName,
   });
 
   if (isCancel(projectName)) {
@@ -263,16 +303,46 @@ async function main() {
   config.projectName = projectName as string;
 
   if (!options.preset) {
+    console.log(pc.dim('\n🚀 Choose a preset to quick-start your project, or customize everything yourself:'));
+
     const preset = await select({
-      message: 'Choose a preset or continue with custom setup:',
+      message: 'Select a preset:',
       options: [
-        { value: 'saas', label: 'SaaS Starter', hint: 'Full-featured with PostgreSQL, full auth, complete DevOps' },
-        { value: 'ecommerce', label: 'E-commerce', hint: 'With Stripe integration and full testing' },
-        { value: 'blog', label: 'Blog/Publishing', hint: 'Optimized for content with Turso' },
-        { value: 'devtool', label: 'Developer Tool', hint: 'GitHub auth and testing focus' },
-        { value: 'portfolio', label: 'Portfolio', hint: 'Minimal setup for personal sites' },
-        { value: 'minimal', label: 'Minimal', hint: 'Basic setup for simple apps' },
-        { value: 'custom', label: 'Custom Setup', hint: 'Configure everything yourself' }
+        {
+          value: 'saas',
+          label: '🏢 SaaS Starter',
+          hint: 'PostgreSQL • Full Auth • Docker • CI/CD • Full PBS'
+        },
+        {
+          value: 'ecommerce',
+          label: '🛒 E-commerce',
+          hint: 'PostgreSQL • Stripe • Full Testing • Complete DevOps'
+        },
+        {
+          value: 'blog',
+          label: '📝 Blog/Publishing',
+          hint: 'Turso • Content-optimized • Vercel Deploy'
+        },
+        {
+          value: 'devtool',
+          label: '🔧 Developer Tool',
+          hint: 'PostgreSQL • GitHub Auth • Testing Focus'
+        },
+        {
+          value: 'portfolio',
+          label: '👤 Portfolio',
+          hint: 'SQLite • Minimal • Personal Sites'
+        },
+        {
+          value: 'minimal',
+          label: '⚡ Minimal',
+          hint: 'SQLite • Basic Setup • Simple Apps'
+        },
+        {
+          value: 'custom',
+          label: '⚙️  Custom Setup',
+          hint: 'Configure everything step-by-step'
+        }
       ],
     });
 
@@ -284,14 +354,18 @@ async function main() {
     if (preset !== 'custom') {
       const selectedPreset = presets[preset as keyof typeof presets];
       Object.assign(config, selectedPreset);
-      console.log(pc.dim(`Applied ${preset} preset configuration`));
+      console.log(pc.green(`✓ Applied ${preset} preset`));
+      console.log(pc.dim(`  ${selectedPreset.description}`));
+    } else {
+      console.log(pc.dim('  Custom setup selected - you\'ll configure everything step by step'));
     }
   }
 
   const description = await text({
     message: 'Project description:',
-    placeholder: 'My awesome application',
-    initialValue: config.projectName ? `A ${config.projectName} application` : '',
+    placeholder: 'A modern web application built with Better-T-Stack',
+    initialValue: config.projectName ? `A ${config.projectName.replace(/-/g, ' ')} application` : '',
+    validate: validateDescription,
   });
 
   if (isCancel(description)) {
@@ -301,9 +375,19 @@ async function main() {
 
   config.description = description as string;
 
+  // Try to get git user name as default
+  let defaultAuthor = 'Your Name';
+  try {
+    defaultAuthor = execSync('git config user.name', { encoding: 'utf8' }).trim();
+  } catch {
+    // Git config not available, use default
+  }
+
   const author = await text({
     message: 'Author name:',
-    placeholder: 'Your Name',
+    placeholder: defaultAuthor,
+    initialValue: defaultAuthor !== 'Your Name' ? defaultAuthor : '',
+    validate: validateAuthor,
   });
 
   if (isCancel(author)) {
