@@ -25,14 +25,14 @@ function Index() {<% if (apiStyle === 'orpc') { %>
           <li>✅ <strong>Framework:</strong> React + TypeScript + Vite</li>
           <li>✅ <strong>Routing:</strong> TanStack Router</li>
           <li>✅ <strong>Styling:</strong> Tailwind CSS<% if (uiStyle !== 'default') { %> + shadcn/ui (<%= uiStyle %>)<% } %></li>
-          <li>✅ <strong>State:</strong> TanStack Query<% if (database !== 'none') { %></li>
-          <li>✅ <strong>Database:</strong> <%= database === 'postgresql' ? 'PostgreSQL' : database === 'turso' ? 'Turso (LibSQL)' : 'SQLite' %> + Drizzle ORM<% } %><% if (auth.length > 0) { %></li>
-          <li>✅ <strong>Auth:</strong> Better Auth with <%= auth.join(', ') %><% } %><% if (testing.length > 0) { %></li>
-          <li>✅ <strong>Testing:</strong> <%= testing.join(' + ') %><% if (unitTesting) { %> + Vitest<% } %><% } %><% if (apiStyle === 'orpc') { %></li>
-          <li>✅ <strong>API:</strong> oRPC (type-safe API calls)<% } %><% if (apiStyle === 'trpc') { %></li>
-          <li>✅ <strong>API:</strong> tRPC (type-safe API calls)<% } %><% if (docker) { %></li>
-          <li>✅ <strong>Docker:</strong> Production-ready containerization<% } %><% if (pbsLevel !== 'none') { %></li>
-          <li>✅ <strong>AI Workflow:</strong> PBS (Plan-Build-Ship) system<% } %>
+          <li>✅ <strong>State:</strong> TanStack Query</li><% if (database !== 'none') { %>
+          <li>✅ <strong>Database:</strong> <%= database === 'postgresql' ? 'PostgreSQL' : database === 'turso' ? 'Turso (LibSQL)' : 'SQLite' %> + Drizzle ORM</li><% } %><% if (auth.length > 0) { %>
+          <li>✅ <strong>Auth:</strong> Better Auth with <%= auth.join(', ') %></li><% } %><% if (testing.length > 0) { %>
+          <li>✅ <strong>Testing:</strong> <%= testing.join(' + ') %><% if (unitTesting) { %> + Vitest<% } %></li><% } %><% if (apiStyle === 'orpc') { %>
+          <li>✅ <strong>API:</strong> oRPC (type-safe API calls)</li><% } %><% if (apiStyle === 'trpc') { %>
+          <li>✅ <strong>API:</strong> tRPC (type-safe API calls)</li><% } %><% if (docker) { %>
+          <li>✅ <strong>Docker:</strong> Production-ready containerization</li><% } %><% if (pbsLevel !== 'none') { %>
+          <li>✅ <strong>AI Workflow:</strong> PBS (Plan-Build-Ship) system</li><% } %>
         </ul>
       </div>
 

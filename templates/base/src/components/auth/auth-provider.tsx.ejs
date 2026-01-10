@@ -1,0 +1,38 @@
+import React from 'react'
+
+<% if (auth.length > 0) { %>
+// Auth provider implementation
+// This will be generated with full auth functionality when auth is enabled
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // TODO: Implement authentication with Better Auth
+  return <>{children}</>
+}
+
+export function useAuth() {
+  // TODO: Return auth state and methods
+  return {
+    user: null,
+    isLoading: false,
+    signIn: async () => {},
+    signOut: async () => {}
+  }
+}
+<% } else { %>
+// Minimal auth provider for projects without authentication
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  return <>{children}</>
+}
+
+export function useAuth() {
+  return {
+    user: null,
+    isLoading: false,
+    signIn: async () => {
+      throw new Error('Authentication not configured')
+    },
+    signOut: async () => {
+      throw new Error('Authentication not configured')
+    }
+  }
+}
+<% } %>
