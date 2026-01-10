@@ -1,0 +1,41 @@
+import type { RouteContext } from '@tanstack/react-router'
+import { auth } from '@/auth/config'
+
+export async function requireAuth(context: RouteContext<any, any>) {
+  const session = await auth.api.getSession({
+    headers: context.request?.headers || new Headers(),
+  })
+
+  if (!session?.user) {
+    throw new Error('Authentication required')
+  }
+
+  return session
+}
+
+export async function optionalAuth(context: RouteContext<any, any>) {
+  try {
+    const session = await auth.api.getSession({
+      headers: context.request?.headers || new Headers(),
+    })
+    return session
+  } catch {
+    return null
+  }
+}
+
+// Server-side auth helpers for API routes
+export async function getServerSession(request: Request) {
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  })
+  return session
+}
+
+export async function requireServerAuth(request: Request) {
+  const session = await getServerSession(request)
+  if (!session?.user) {
+    throw new Response('Unauthorized', { status: 401 })
+  }
+  return session
+}

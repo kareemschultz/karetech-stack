@@ -1,0 +1,105 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'<% if (pwa) { %>
+import { VitePWA } from 'vite-plugin-pwa'<% } %><% if (errorTracking === 'sentry') { %>
+import { sentryVitePlugin } from '@sentry/vite-plugin'<% } %>
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [
+    react({
+      babel: {
+        plugins: [<% if (testing.includes('vitest')) { %>
+          // Add any Babel plugins for testing if needed<% } %>
+        ]
+      }
+    }),<% if (pwa) { %>
+    VitePWA({
+      registerType: 'autoUpdate',
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+      },
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      manifest: {
+        name: '<%= projectName %>',
+        short_name: '<%= projectName %>',
+        description: '<%= description %>',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
+        display: 'standalone',
+        orientation: 'portrait',
+        scope: '/',
+        start_url: '/',
+        icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          }
+        ]
+      }
+    }),<% } %><% if (errorTracking === 'sentry') { %>
+    sentryVitePlugin({
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+    }),<% } %>
+  ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@/components': path.resolve(__dirname, './src/components'),
+      '@/lib': path.resolve(__dirname, './src/lib'),
+      '@/utils': path.resolve(__dirname, './src/utils')<% if (database !== 'none') { %>,
+      '@/db': path.resolve(__dirname, './src/db')<% } %><% if (auth.length > 0) { %>,
+      '@/auth': path.resolve(__dirname, './src/auth')<% } %><% if (apiStyle === 'orpc') { %>,
+      '@/api': path.resolve(__dirname, './src/api')<% } %><% if (apiStyle === 'trpc') { %>,
+      '@/trpc': path.resolve(__dirname, './src/trpc')<% } %>
+    }
+  },<% if (testing.includes('vitest')) { %>
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    css: true
+  },<% } %>
+  build: {
+    sourcemap: true,<% if (errorTracking === 'sentry') { %>
+    // Source maps are required for Sentry<% } %>
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],<% if (apiStyle === 'orpc') { %>
+          api: ['@orpc/client', '@orpc/react-query'],<% } %><% if (apiStyle === 'trpc') { %>
+          api: ['@trpc/client', '@trpc/react-query'],<% } %>
+          router: ['@tanstack/react-router']<% if (auth.length > 0) { %>,
+          auth: ['better-auth']<% } %><% if (database !== 'none') { %>,
+          db: ['drizzle-orm'<%= database === 'postgresql' ? ", 'postgres'" : database === 'sqlite' ? ", 'better-sqlite3'" : database === 'turso' ? ", '@libsql/client'" : '' %>]<% } %>
+        }
+      }
+    }
+  },
+  server: {
+    port: 3000,
+    host: true<% if (testing.includes('playwright') || testing.includes('puppeteer')) { %>,
+    // Configure for E2E testing
+    ...(process.env.CI && {
+      host: '0.0.0.0',
+      port: 4173
+    })<% } %>
+  },
+  preview: {
+    port: 4173,
+    host: true
+  },
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version)<% if (analytics === 'google') { %>,
+    __GA_TRACKING_ID__: JSON.stringify(process.env.VITE_GA_TRACKING_ID)<% } %><% if (analytics === 'posthog') { %>,
+    __POSTHOG_KEY__: JSON.stringify(process.env.VITE_POSTHOG_KEY)<% } %>
+  }
+})

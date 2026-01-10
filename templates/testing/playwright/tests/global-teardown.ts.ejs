@@ -1,0 +1,35 @@
+import { FullConfig } from '@playwright/test'
+<% if (database !== 'none') { %>import { execSync } from 'child_process'
+import { unlink } from 'fs/promises'<% } %>
+
+async function globalTeardown(config: FullConfig) {
+  console.log('🧹 Cleaning up global test environment...')
+
+  <% if (database !== 'none') { %>// Cleanup test database
+  try {
+    <% if (database === 'sqlite' || database === 'turso') { %>// Remove test SQLite database
+    await unlink('./test.db').catch(() => {
+      // File might not exist, ignore error
+    })<% } %>
+
+    <% if (database === 'postgresql') { %>// Drop test database
+    try {
+      execSync('dropdb <%= projectName.toLowerCase().replace(/[^a-z0-9]/g, '_') %>_test', { stdio: 'ignore' })
+    } catch {
+      // Database might not exist, ignore error
+    }<% } %>
+
+    console.log('✅ Test database cleanup complete')
+  } catch (error) {
+    console.warn('⚠️  Failed to cleanup test database:', error)
+  }
+
+  <% } %>// Clear test environment variables
+  delete process.env.DATABASE_URL
+  <% if (auth.length > 0) { %>delete process.env.BETTER_AUTH_SECRET
+  delete process.env.BETTER_AUTH_URL<% } %>
+
+  console.log('🎉 Global teardown complete!')
+}
+
+export default globalTeardown

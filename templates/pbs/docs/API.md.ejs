@@ -1,0 +1,1071 @@
+# API Documentation — <%= projectName %>
+
+> **API Reference and Integration Guide**
+> Update this document when adding, modifying, or removing API endpoints.
+
+---
+
+## 🌐 API Overview
+
+**<%= projectName %>** provides a <%= apiStyle === 'orpc' ? 'type-safe oRPC' : apiStyle === 'trpc' ? 'type-safe tRPC' : 'RESTful HTTP' %> API for client-server communication. All endpoints are secured<% if (auth.length > 0) { %>, authenticated,<% } %> and follow consistent patterns for error handling and data validation.
+
+### Base Configuration
+
+| Property | Value |
+|----------|-------|
+| **Base URL** | `http://localhost:3000` (development) |
+| **Protocol** | HTTPS (production) |
+| **Content Type** | `application/json` |
+<% if (apiStyle === 'orpc' || apiStyle === 'trpc') { %>| **Type Safety** | End-to-end TypeScript |<% } %>
+<% if (auth.length > 0) { %>| **Authentication** | Session-based with cookies |<% } %>
+
+<% if (apiStyle === 'rest') { %>---
+
+## 📋 REST API Endpoints
+
+### Authentication Endpoints
+
+<% if (auth.length > 0) { %>#### POST `/api/auth/login`
+**Purpose:** Authenticate user with email/password or initiate OAuth flow
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword"
+}
+```
+
+**Response (200):**
+```json
+{
+  "user": {
+    "id": "uuid",
+    "name": "John Doe",
+    "email": "user@example.com",
+    "image": "https://avatar.url"
+  },
+  "session": {
+    "expires": "2024-12-31T23:59:59.999Z"
+  }
+}
+```
+
+**Response (401):**
+```json
+{
+  "error": "Invalid credentials",
+  "code": "AUTH_INVALID_CREDENTIALS"
+}
+```
+
+#### POST `/api/auth/logout`
+**Purpose:** End user session and clear authentication cookies
+
+**Request:** No body required
+
+**Response (200):**
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+
+#### GET `/api/auth/me`
+**Purpose:** Get current authenticated user information
+
+**Headers:**
+- `Authorization`: Required (session cookie)
+
+**Response (200):**
+```json
+{
+  "user": {
+    "id": "uuid",
+    "name": "John Doe",
+    "email": "user@example.com",
+    "image": "https://avatar.url",
+    "emailVerified": true,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+#### OAuth Endpoints
+
+<% auth.forEach(provider => { if (['github', 'google', 'discord', 'microsoft'].includes(provider)) { %>**GET `/api/auth/<%= provider %>`**
+- Redirects to <%= provider.charAt(0).toUpperCase() + provider.slice(1) %> OAuth authorization
+- Query params: `redirect_uri` (optional)
+
+**GET `/api/auth/callback/<%= provider %>`**
+- Handles <%= provider.charAt(0).toUpperCase() + provider.slice(1) %> OAuth callback
+- Creates session and redirects to application
+
+<% }}) %><% } else { %>#### Authentication Not Configured
+This project does not have authentication configured. To add authentication:
+
+1. Update project configuration to include auth providers
+2. Regenerate with `bun create karetech-stack`
+3. Or manually integrate Better Auth following the documentation
+<% } %>
+
+### User Management
+
+<% if (auth.length > 0) { %>#### GET `/api/users`
+**Purpose:** List all users (admin only)
+
+**Headers:**
+- `Authorization`: Required
+
+**Query Parameters:**
+- `page` (number): Page number (default: 1)
+- `limit` (number): Items per page (default: 20, max: 100)
+- `search` (string): Search by name or email
+
+**Response (200):**
+```json
+{
+  "users": [
+    {
+      "id": "uuid",
+      "name": "John Doe",
+      "email": "user@example.com",
+      "image": "https://avatar.url",
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 50,
+    "pages": 3
+  }
+}
+```
+
+#### GET `/api/users/:id`
+**Purpose:** Get specific user profile
+
+**Parameters:**
+- `id`: User UUID
+
+**Response (200):**
+```json
+{
+  "user": {
+    "id": "uuid",
+    "name": "John Doe",
+    "email": "user@example.com",
+    "image": "https://avatar.url",
+    "bio": "User bio text",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+#### PUT `/api/users/:id`
+**Purpose:** Update user profile (own profile only)
+
+**Request Body:**
+```json
+{
+  "name": "Updated Name",
+  "bio": "Updated bio text",
+  "image": "https://new-avatar.url"
+}
+```
+
+**Response (200):**
+```json
+{
+  "user": {
+    "id": "uuid",
+    "name": "Updated Name",
+    "email": "user@example.com",
+    "bio": "Updated bio text",
+    "image": "https://new-avatar.url",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+<% } %>
+
+### Content Management
+
+#### GET `/api/posts`
+**Purpose:** List all published posts
+
+**Query Parameters:**
+- `page` (number): Page number (default: 1)
+- `limit` (number): Items per page (default: 10, max: 50)
+- `author` (string): Filter by author ID
+- `search` (string): Search in title and content
+
+**Response (200):**
+```json
+{
+  "posts": [
+    {
+      "id": "uuid",
+      "title": "Post Title",
+      "content": "Post content...",
+      "excerpt": "Brief excerpt...",
+      "published": true,
+      "author": {
+        "id": "uuid",
+        "name": "Author Name",
+        "image": "https://avatar.url"
+      },
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 25,
+    "pages": 3
+  }
+}
+```
+
+#### GET `/api/posts/:id`
+**Purpose:** Get specific post by ID
+
+**Parameters:**
+- `id`: Post UUID
+
+**Response (200):**
+```json
+{
+  "post": {
+    "id": "uuid",
+    "title": "Post Title",
+    "content": "Full post content...",
+    "published": true,
+    "author": {
+      "id": "uuid",
+      "name": "Author Name",
+      "email": "author@example.com",
+      "image": "https://avatar.url"
+    },
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+<% if (auth.length > 0) { %>#### POST `/api/posts`
+**Purpose:** Create new post (authenticated users only)
+
+**Headers:**
+- `Authorization`: Required
+
+**Request Body:**
+```json
+{
+  "title": "New Post Title",
+  "content": "Post content...",
+  "published": false
+}
+```
+
+**Response (201):**
+```json
+{
+  "post": {
+    "id": "uuid",
+    "title": "New Post Title",
+    "content": "Post content...",
+    "published": false,
+    "author": {
+      "id": "uuid",
+      "name": "Author Name",
+      "image": "https://avatar.url"
+    },
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+#### PUT `/api/posts/:id`
+**Purpose:** Update existing post (author only)
+
+**Request Body:**
+```json
+{
+  "title": "Updated Title",
+  "content": "Updated content...",
+  "published": true
+}
+```
+
+#### DELETE `/api/posts/:id`
+**Purpose:** Delete post (author only)
+
+**Response (200):**
+```json
+{
+  "message": "Post deleted successfully"
+}
+```
+<% } %>
+
+---
+
+## 📁 Error Handling
+
+### Standard Error Response
+```json
+{
+  "error": "Human-readable error message",
+  "code": "MACHINE_READABLE_CODE",
+  "details": {
+    "field": "Additional context"
+  },
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
+
+### HTTP Status Codes
+
+| Code | Meaning | Usage |
+|------|---------|-------|
+| `200` | OK | Successful request |
+| `201` | Created | Resource created successfully |
+| `400` | Bad Request | Invalid input or malformed request |
+| `401` | Unauthorized | Authentication required |
+| `403` | Forbidden | Insufficient permissions |
+| `404` | Not Found | Resource not found |
+| `422` | Unprocessable Entity | Validation errors |
+| `429` | Too Many Requests | Rate limit exceeded |
+| `500` | Internal Server Error | Server error |
+
+### Common Error Codes
+
+| Code | Description |
+|------|-------------|
+| `AUTH_REQUIRED` | Authentication required |
+| `AUTH_INVALID_CREDENTIALS` | Invalid email/password |
+| `AUTH_SESSION_EXPIRED` | Session has expired |
+| `VALIDATION_FAILED` | Input validation failed |
+| `RESOURCE_NOT_FOUND` | Requested resource not found |
+| `PERMISSION_DENIED` | Insufficient permissions |
+| `RATE_LIMIT_EXCEEDED` | Too many requests |
+
+<% } %>
+
+<% if (apiStyle === 'orpc') { %>---
+
+## 🔌 oRPC API Reference
+
+### Client Setup
+
+```typescript
+// src/lib/api.ts
+import { createRPCClient } from '@orpc/client'
+import type { AppRouter } from '@/server/api'
+
+export const api = createRPCClient<AppRouter>({
+  baseURL: '/api',
+  // Additional configuration
+})
+```
+
+### Authentication Procedures
+
+<% if (auth.length > 0) { %>#### `auth.login`
+**Input:**
+```typescript
+{
+  email: string
+  password: string
+}
+```
+
+**Output:**
+```typescript
+{
+  user: {
+    id: string
+    name: string
+    email: string
+    image?: string
+  }
+  session: {
+    expires: string
+  }
+}
+```
+
+**Usage:**
+```typescript
+const result = await api.auth.login({
+  email: 'user@example.com',
+  password: 'password'
+})
+```
+
+#### `auth.logout`
+**Input:** None
+
+**Output:**
+```typescript
+{
+  message: string
+}
+```
+
+#### `auth.me`
+**Input:** None (requires authentication)
+
+**Output:**
+```typescript
+{
+  user: {
+    id: string
+    name: string
+    email: string
+    image?: string
+    emailVerified: boolean
+    createdAt: string
+    updatedAt: string
+  }
+}
+```
+<% } %>
+
+### User Management
+
+<% if (auth.length > 0) { %>#### `users.getAll`
+**Input:**
+```typescript
+{
+  page?: number
+  limit?: number
+  search?: string
+}
+```
+
+**Output:**
+```typescript
+{
+  users: Array<{
+    id: string
+    name: string
+    email: string
+    image?: string
+    createdAt: string
+  }>
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    pages: number
+  }
+}
+```
+
+#### `users.getById`
+**Input:**
+```typescript
+{
+  id: string
+}
+```
+
+#### `users.update`
+**Input:**
+```typescript
+{
+  id: string
+  data: {
+    name?: string
+    bio?: string
+    image?: string
+  }
+}
+```
+<% } %>
+
+### Content Management
+
+#### `posts.getAll`
+**Input:**
+```typescript
+{
+  page?: number
+  limit?: number
+  author?: string
+  search?: string
+}
+```
+
+**Output:**
+```typescript
+{
+  posts: Array<{
+    id: string
+    title: string
+    content: string
+    excerpt: string
+    published: boolean
+    author: {
+      id: string
+      name: string
+      image?: string
+    }
+    createdAt: string
+    updatedAt: string
+  }>
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    pages: number
+  }
+}
+```
+
+#### `posts.getById`
+**Input:**
+```typescript
+{
+  id: string
+}
+```
+
+<% if (auth.length > 0) { %>#### `posts.create`
+**Input:**
+```typescript
+{
+  title: string
+  content: string
+  published?: boolean
+}
+```
+
+#### `posts.update`
+**Input:**
+```typescript
+{
+  id: string
+  data: {
+    title?: string
+    content?: string
+    published?: boolean
+  }
+}
+```
+
+#### `posts.delete`
+**Input:**
+```typescript
+{
+  id: string
+}
+```
+<% } %>
+
+### Client Usage Examples
+
+```typescript
+// List all posts
+const { posts, pagination } = await api.posts.getAll({
+  page: 1,
+  limit: 10,
+  search: 'typescript'
+})
+
+// Get specific post
+const post = await api.posts.getById({ id: 'post-uuid' })
+
+<% if (auth.length > 0) { %>// Create new post (requires authentication)
+const newPost = await api.posts.create({
+  title: 'My New Post',
+  content: 'Post content here...',
+  published: true
+})
+
+// Update existing post
+const updatedPost = await api.posts.update({
+  id: 'post-uuid',
+  data: {
+    title: 'Updated Title',
+    published: true
+  }
+})
+
+// Delete post
+await api.posts.delete({ id: 'post-uuid' })
+<% } %>
+```
+
+### Type Safety
+
+All oRPC procedures are fully type-safe:
+
+```typescript
+// TypeScript will infer the correct types
+const posts = await api.posts.getAll({
+  page: 1,        // ✅ number
+  limit: 'invalid' // ❌ TypeScript error: string is not assignable to number
+})
+
+// Return types are also inferred
+const post = await api.posts.getById({ id: 'uuid' })
+console.log(post.title)    // ✅ string
+console.log(post.invalid)  // ❌ TypeScript error: property does not exist
+```
+<% } %>
+
+<% if (apiStyle === 'trpc') { %>---
+
+## ⚡ tRPC API Reference
+
+### Client Setup
+
+```typescript
+// src/lib/api.ts
+import { createTRPCReact } from '@trpc/react-query'
+import type { AppRouter } from '@/server/trpc'
+
+export const trpc = createTRPCReact<AppRouter>()
+```
+
+### React Query Integration
+
+```typescript
+// In your app root
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { trpc } from '@/lib/api'
+import { httpBatchLink } from '@trpc/client'
+
+const queryClient = new QueryClient()
+const trpcClient = trpc.createClient({
+  links: [
+    httpBatchLink({
+      url: '/api/trpc',
+    }),
+  ],
+})
+
+export default function App() {
+  return (
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        {/* Your app components */}
+      </QueryClientProvider>
+    </trpc.Provider>
+  )
+}
+```
+
+### Authentication Procedures
+
+<% if (auth.length > 0) { %>#### `auth.login`
+```typescript
+// Mutation
+const login = trpc.auth.login.useMutation({
+  onSuccess: (data) => {
+    console.log('Logged in:', data.user)
+    // Redirect or update UI
+  },
+  onError: (error) => {
+    console.error('Login failed:', error.message)
+  }
+})
+
+// Usage
+login.mutate({
+  email: 'user@example.com',
+  password: 'password'
+})
+```
+
+#### `auth.me`
+```typescript
+// Query
+const { data: user, isLoading } = trpc.auth.me.useQuery()
+
+if (isLoading) return <div>Loading...</div>
+if (!user) return <div>Not authenticated</div>
+
+return <div>Welcome, {user.name}!</div>
+```
+<% } %>
+
+### Content Management
+
+#### `posts.getAll`
+```typescript
+// Query with parameters
+const { data, isLoading, error } = trpc.posts.getAll.useQuery({
+  page: 1,
+  limit: 10,
+  search: 'typescript'
+})
+
+if (isLoading) return <div>Loading posts...</div>
+if (error) return <div>Error: {error.message}</div>
+
+return (
+  <div>
+    {data?.posts.map(post => (
+      <div key={post.id}>
+        <h3>{post.title}</h3>
+        <p>{post.excerpt}</p>
+      </div>
+    ))}
+  </div>
+)
+```
+
+#### `posts.getById`
+```typescript
+// Dynamic query
+function PostDetail({ postId }: { postId: string }) {
+  const { data: post } = trpc.posts.getById.useQuery({ id: postId })
+
+  if (!post) return <div>Post not found</div>
+
+  return (
+    <article>
+      <h1>{post.title}</h1>
+      <div>{post.content}</div>
+      <p>By {post.author.name}</p>
+    </article>
+  )
+}
+```
+
+<% if (auth.length > 0) { %>#### `posts.create`
+```typescript
+// Mutation with optimistic updates
+const createPost = trpc.posts.create.useMutation({
+  onSuccess: () => {
+    // Invalidate and refetch posts
+    trpc.posts.getAll.invalidate()
+  }
+})
+
+function CreatePostForm() {
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    createPost.mutate({ title, content, published: false })
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Post title"
+        required
+      />
+      <textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder="Post content"
+        required
+      />
+      <button type="submit" disabled={createPost.isLoading}>
+        {createPost.isLoading ? 'Creating...' : 'Create Post'}
+      </button>
+    </form>
+  )
+}
+```
+<% } %>
+
+### Advanced Usage
+
+#### Infinite Queries
+```typescript
+const {
+  data,
+  fetchNextPage,
+  hasNextPage,
+  isFetching,
+  isFetchingNextPage,
+} = trpc.posts.getAll.useInfiniteQuery(
+  { limit: 10 },
+  {
+    getNextPageParam: (lastPage) =>
+      lastPage.pagination.page < lastPage.pagination.pages
+        ? lastPage.pagination.page + 1
+        : undefined,
+  }
+)
+```
+
+#### Optimistic Updates
+```typescript
+const utils = trpc.useUtils()
+
+const updatePost = trpc.posts.update.useMutation({
+  onMutate: async ({ id, data }) => {
+    // Cancel outgoing refetches
+    await utils.posts.getById.cancel({ id })
+
+    // Snapshot the previous value
+    const previousPost = utils.posts.getById.getData({ id })
+
+    // Optimistically update to the new value
+    utils.posts.getById.setData({ id }, (old) =>
+      old ? { ...old, ...data } : undefined
+    )
+
+    return { previousPost }
+  },
+  onError: (err, { id }, context) => {
+    // Rollback on error
+    utils.posts.getById.setData({ id }, context?.previousPost)
+  },
+  onSettled: ({ id }) => {
+    // Sync with server
+    utils.posts.getById.invalidate({ id })
+  },
+})
+```
+<% } %>
+
+---
+
+## 🔒 Authentication & Authorization
+
+<% if (auth.length > 0) { %>### Session Management
+
+**Session Cookie Configuration:**
+- Name: `better-auth.session_token`
+- HttpOnly: `true`
+- Secure: `true` (production)
+- SameSite: `lax`
+- Domain: Current domain
+- Path: `/`
+
+### Protected Routes
+
+<% if (apiStyle === 'rest') { %>```typescript
+// Middleware for protected routes
+export const requireAuth = async (c: Context, next: Next) => {
+  const session = await getSession(c)
+  if (!session) {
+    return c.json({ error: 'Authentication required' }, 401)
+  }
+  c.set('user', session.user)
+  await next()
+}
+
+// Usage
+app.get('/api/protected', requireAuth, (c) => {
+  const user = c.get('user')
+  return c.json({ message: `Hello ${user.name}` })
+})
+```
+<% } %>
+
+<% if (apiStyle === 'orpc' || apiStyle === 'trpc') { %>```typescript
+// Protected procedure middleware
+const protectedProcedure = publicProcedure.use(async ({ ctx, next }) => {
+  if (!ctx.session?.user) {
+    throw new TRPCError({
+      code: 'UNAUTHORIZED',
+      message: 'Authentication required',
+    })
+  }
+  return next({
+    ctx: {
+      ...ctx,
+      user: ctx.session.user,
+    },
+  })
+})
+
+// Usage
+export const userRouter = router({
+  getProfile: protectedProcedure.query(async ({ ctx }) => {
+    return await getUserProfile(ctx.user.id)
+  }),
+})
+```
+<% } %>
+
+### Permission Levels
+
+| Level | Description | Capabilities |
+|-------|-------------|--------------|
+| **Anonymous** | Unauthenticated users | Read public content |
+| **User** | Authenticated users | Create/edit own content |
+| **Admin** | Administrator users | Manage all content and users |
+
+### OAuth Providers
+
+<% auth.forEach(provider => { if (['github', 'google', 'discord', 'microsoft'].includes(provider)) { %>#### <%= provider.charAt(0).toUpperCase() + provider.slice(1) %> OAuth
+
+**Configuration:**
+```typescript
+<%= provider %>: {
+  clientId: process.env.<%= provider.toUpperCase() %>_CLIENT_ID!,
+  clientSecret: process.env.<%= provider.toUpperCase() %>_CLIENT_SECRET!,
+}
+```
+
+**Redirect URLs:**
+- Development: `http://localhost:3000/api/auth/callback/<%= provider %>`
+- Production: `https://yourdomain.com/api/auth/callback/<%= provider %>`
+
+<% }}) %><% } else { %>### No Authentication
+
+This project does not include authentication. All API endpoints are public.
+
+To add authentication:
+1. Regenerate project with auth configuration
+2. Or manually integrate Better Auth
+3. Update API endpoints to include protection
+<% } %>
+
+---
+
+## 📊 Rate Limiting
+
+### Default Limits
+
+| Endpoint Type | Rate Limit | Window |
+|---------------|------------|---------|
+| **Authentication** | 5 requests | 15 minutes |
+| **Read Operations** | 100 requests | 15 minutes |
+| **Write Operations** | 20 requests | 15 minutes |
+| **File Uploads** | 10 requests | 15 minutes |
+
+### Rate Limit Headers
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1640995200
+X-RateLimit-Retry-After: 60
+```
+
+### Rate Limit Exceeded Response
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "code": "RATE_LIMIT_EXCEEDED",
+  "details": {
+    "limit": 100,
+    "window": 900,
+    "retryAfter": 60
+  },
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
+
+---
+
+## 🧪 Testing & Development
+
+### API Testing
+
+<% if (testing.includes('playwright')) { %>#### Playwright E2E Tests
+```typescript
+// tests/e2e/api.spec.ts
+import { test, expect } from '@playwright/test'
+
+test('API authentication flow', async ({ page }) => {
+  // Test login
+  const response = await page.request.post('/api/auth/login', {
+    data: {
+      email: 'test@example.com',
+      password: 'password'
+    }
+  })
+
+  expect(response.ok()).toBeTruthy()
+  const data = await response.json()
+  expect(data.user).toBeDefined()
+  expect(data.user.email).toBe('test@example.com')
+})
+```
+<% } %>
+
+### Mock Data
+
+```typescript
+// Development seed data
+export const mockUsers = [
+  {
+    id: 'user-1',
+    name: 'John Doe',
+    email: 'john@example.com',
+    image: 'https://avatar.example.com/john.jpg'
+  },
+  {
+    id: 'user-2',
+    name: 'Jane Smith',
+    email: 'jane@example.com',
+    image: 'https://avatar.example.com/jane.jpg'
+  }
+]
+
+export const mockPosts = [
+  {
+    id: 'post-1',
+    title: 'Getting Started with <%= projectName %>',
+    content: 'Welcome to our platform...',
+    published: true,
+    authorId: 'user-1',
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01')
+  }
+]
+```
+
+### Environment Variables
+
+```bash
+# Development
+NODE_ENV=development
+<% if (database === 'sqlite') { %>DATABASE_URL=./dev.db<% } %>
+<% if (database === 'postgresql') { %>DATABASE_URL=postgresql://user:pass@localhost:5432/dev_db<% } %>
+<% if (database === 'turso') { %>DATABASE_URL=file:./dev.db<% } %>
+
+# Testing
+NODE_ENV=test
+<% if (database === 'sqlite') { %>DATABASE_URL=./test.db<% } %>
+<% if (database === 'postgresql') { %>DATABASE_URL=postgresql://user:pass@localhost:5432/test_db<% } %>
+<% if (auth.length > 0) { %>BETTER_AUTH_SECRET=test-secret-for-development<% } %>
+
+# Production
+NODE_ENV=production
+<% if (database === 'postgresql') { %>DATABASE_URL=postgresql://user:pass@prod-host:5432/prod_db<% } %>
+<% if (database === 'turso') { %>DATABASE_URL=libsql://database-url.turso.io
+DATABASE_AUTH_TOKEN=prod-auth-token<% } %>
+<% if (auth.length > 0) { %>BETTER_AUTH_SECRET=secure-production-secret<% } %>
+```
+
+---
+
+## 📚 External Resources
+
+| Resource | URL | Purpose |
+|----------|-----|---------|
+<% if (apiStyle === 'orpc') { %>| **oRPC Documentation** | [oRPC Docs](https://orpc.dev) | API framework docs |<% } %>
+<% if (apiStyle === 'trpc') { %>| **tRPC Documentation** | [tRPC Docs](https://trpc.io) | API framework docs |<% } %>
+| **Hono.js Documentation** | [Hono Docs](https://hono.dev) | Web framework docs |
+<% if (auth.length > 0) { %>| **Better Auth Documentation** | [Better Auth Docs](https://better-auth.com) | Authentication guide |<% } %>
+<% if (database !== 'none') { %>| **Drizzle ORM Documentation** | [Drizzle Docs](https://orm.drizzle.team) | Database ORM guide |<% } %>
+<% if (database === 'postgresql') { %>| **PostgreSQL Documentation** | [PostgreSQL Docs](https://postgresql.org/docs) | Database documentation |<% } %>
+<% if (database === 'turso') { %>| **Turso Documentation** | [Turso Docs](https://docs.turso.tech) | Edge database docs |<% } %>
+
+---
+
+*Last Updated: <%= new Date().toLocaleDateString() %>*
+*Generated by KareTech Stack*

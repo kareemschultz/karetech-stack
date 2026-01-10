@@ -1,0 +1,158 @@
+import { test, expect } from '@playwright/test'
+
+test.describe('<%= projectName %> - Homepage', () => {
+  test('should load the homepage successfully', async ({ page }) => {
+    await page.goto('/')
+
+    // Check if the main heading is visible
+    await expect(page.locator('h3')).toContainText('Welcome to <%= projectName %>!')
+
+    // Check if the description is visible
+    await expect(page.locator('text=<%= description %>')).toBeVisible()
+
+    // Check if navigation links are present
+    await expect(page.locator('a[href="/"]')).toBeVisible()
+    await expect(page.locator('a[href="/about"]')).toBeVisible()
+  })
+
+  test('should navigate to about page', async ({ page }) => {
+    await page.goto('/')
+
+    // Click on the about link
+    await page.click('a[href="/about"]')
+
+    // Check if we're on the about page
+    await expect(page).toHaveURL('/about')
+
+    // Check if the about page content is visible
+    await expect(page.locator('h3')).toContainText('About <%= projectName %>')
+  })
+
+  <% if (apiStyle === 'orpc' || apiStyle === 'trpc') { %>test('should display API connection status', async ({ page }) => {
+    await page.goto('/')
+
+    // Wait for API call to complete
+    await page.waitForSelector('text=API Response', { timeout: 10000 })
+
+    // Check if API response is displayed
+    const apiResponse = page.locator('text=API Response')
+    await expect(apiResponse).toBeVisible()
+  })
+
+  <% } %>test('should be responsive on mobile', async ({ page }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 })
+
+    await page.goto('/')
+
+    // Check if content is still accessible on mobile
+    await expect(page.locator('h3')).toBeVisible()
+    await expect(page.locator('text=<%= description %>')).toBeVisible()
+  })
+
+  test('should have proper meta tags', async ({ page }) => {
+    await page.goto('/')
+
+    // Check page title
+    await expect(page).toHaveTitle('<%= projectName %>')
+
+    <% if (description) { %>// Check meta description
+    const metaDescription = await page.locator('meta[name="description"]').getAttribute('content')
+    expect(metaDescription).toContain('<%= description %>')
+
+    <% } %>// Check viewport meta tag
+    const viewport = await page.locator('meta[name="viewport"]').getAttribute('content')
+    expect(viewport).toContain('width=device-width')
+  })
+})
+
+test.describe('<%= projectName %> - Navigation', () => {
+  test('should navigate between pages correctly', async ({ page }) => {
+    await page.goto('/')
+
+    // Test navigation to about page
+    await page.click('a[href="/about"]')
+    await expect(page).toHaveURL('/about')
+
+    // Test navigation back to home
+    await page.click('a[href="/"]')
+    await expect(page).toHaveURL('/')
+  })
+
+  test('should handle 404 pages', async ({ page }) => {
+    await page.goto('/non-existent-page')
+
+    // Should show 404 content
+    await expect(page.locator('text=404')).toBeVisible()
+    await expect(page.locator('text=Page Not Found')).toBeVisible()
+
+    // Should have link to go back home
+    await expect(page.locator('a[href="/"]')).toBeVisible()
+  })
+})
+
+<% if (testing.includes('accessibility')) { %>test.describe('<%= projectName %> - Accessibility', () => {
+  test('should pass basic accessibility checks', async ({ page }) => {
+    await page.goto('/')
+
+    // Check for proper heading hierarchy
+    const h1Count = await page.locator('h1').count()
+    const h3Count = await page.locator('h3').count()
+
+    expect(h1Count + h3Count).toBeGreaterThan(0)
+
+    // Check for alt text on images
+    const images = page.locator('img')
+    const imageCount = await images.count()
+
+    if (imageCount > 0) {
+      for (let i = 0; i < imageCount; i++) {
+        const alt = await images.nth(i).getAttribute('alt')
+        expect(alt).not.toBeNull()
+      }
+    }
+
+    // Check for proper form labels
+    const inputs = page.locator('input')
+    const inputCount = await inputs.count()
+
+    for (let i = 0; i < inputCount; i++) {
+      const input = inputs.nth(i)
+      const id = await input.getAttribute('id')
+      if (id) {
+        const label = page.locator(`label[for="${id}"]`)
+        await expect(label).toBeVisible()
+      }
+    }
+  })
+})
+
+<% } %><% if (pwa) { %>test.describe('<%= projectName %> - PWA', () => {
+  test('should have service worker registered', async ({ page }) => {
+    await page.goto('/')
+
+    // Check if service worker is registered
+    const swRegistered = await page.evaluate(async () => {
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration()
+        return !!registration
+      }
+      return false
+    })
+
+    expect(swRegistered).toBe(true)
+  })
+
+  test('should have manifest.json', async ({ page }) => {
+    await page.goto('/manifest.json')
+
+    const response = await page.waitForResponse('/manifest.json')
+    expect(response.status()).toBe(200)
+
+    const manifest = await response.json()
+    expect(manifest.name).toBe('<%= projectName %>')
+    expect(manifest.short_name).toBeTruthy()
+  })
+})
+
+<% } %>

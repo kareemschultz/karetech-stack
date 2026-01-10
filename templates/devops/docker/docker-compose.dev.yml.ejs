@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # Development application with hot reload
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    ports:
+      - "5173:5173"
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - VITE_PORT=5173
+      - PORT=3000
+      <% if (database === 'postgresql') { %>- DATABASE_URL=postgresql://postgres:password@postgres:5432/<%= projectName.toLowerCase().replace(/[^a-z0-9]/g, '_') %><% } %>
+      <% if (database === 'sqlite') { %>- DATABASE_URL=/app/local.db<% } %>
+      <% if (auth.length > 0) { %>- BETTER_AUTH_SECRET=dev-secret-key-change-in-production
+      - BETTER_AUTH_URL=http://localhost:3000<% } %>
+    volumes:
+      - .:/app
+      - /app/node_modules
+      <% if (database === 'sqlite') { %>- ./local.db:/app/local.db<% } %>
+    depends_on:
+      <% if (database === 'postgresql') { %>- postgres<% } %>
+      <% if (analytics === 'posthog') { %>- redis<% } %>
+    networks:
+      - dev-network
+    command: bun run dev
+
+  <% if (database === 'postgresql') { %># PostgreSQL for development
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=<%= projectName.toLowerCase().replace(/[^a-z0-9]/g, '_') %>_dev
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - dev-network
+
+  # pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - dev-network
+
+  <% } %><% if (analytics === 'posthog') { %># Redis for development
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - dev-network
+
+  # Redis Commander for redis management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - dev-network
+
+  <% } %><% if (testing.includes('playwright')) { %># Playwright service for E2E testing
+  playwright:
+    build:
+      context: .
+      dockerfile: Dockerfile.playwright
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - app
+    networks:
+      - dev-network
+    environment:
+      - PLAYWRIGHT_BASE_URL=http://app:5173
+
+  <% } %>volumes:
+  <% if (database === 'postgresql') { %>postgres-dev-data:<% } %>
+
+networks:
+  dev-network:
+    driver: bridge

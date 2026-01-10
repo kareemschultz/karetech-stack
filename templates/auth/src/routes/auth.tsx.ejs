@@ -1,0 +1,105 @@
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import React from "react"
+import { useSession } from "@/lib/auth-client"
+import { LoginForm } from "@/components/auth/login-form"
+import { SignupForm } from "@/components/auth/signup-form"
+
+export const Route = createFileRoute('/auth')({
+  component: AuthPage,
+})
+
+function AuthPage() {
+  const { data: session, isLoading } = useSession()
+  const [mode, setMode] = React.useState<"login" | "signup">("login")
+  const [error, setError] = React.useState<string>("")
+  const [success, setSuccess] = React.useState<string>("")
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (session?.user && !isLoading) {
+      window.location.href = "/"
+    }
+  }, [session, isLoading])
+
+  const handleSuccess = () => {
+    setError("")
+    if (mode === "signup") {
+      setSuccess("Account created successfully! Please check your email to verify your account.")
+      setMode("login")
+    } else {
+      window.location.href = "/"
+    }
+  }
+
+  const handleError = (errorMessage: string) => {
+    setError(errorMessage)
+    setSuccess("")
+  }
+
+  const toggleMode = () => {
+    setMode(mode === "login" ? "signup" : "login")
+    setError("")
+    setSuccess("")
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="w-full max-w-md">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
+
+        {/* Success Message */}
+        {success && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+            <p className="text-sm text-green-700">{success}</p>
+          </div>
+        )}
+
+        {/* Auth Forms */}
+        {mode === "login" ? (
+          <LoginForm onSuccess={handleSuccess} onError={handleError} />
+        ) : (
+          <SignupForm onSuccess={handleSuccess} onError={handleError} />
+        )}
+
+        {/* Toggle Mode */}
+        <div className="mt-6 text-center">
+          <button
+            onClick={toggleMode}
+            className="text-primary hover:underline text-sm"
+          >
+            {mode === "login"
+              ? "Don't have an account? Sign up"
+              : "Already have an account? Sign in"}
+          </button>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 text-center text-xs text-muted-foreground">
+          <p>
+            By continuing, you agree to our{" "}
+            <a href="/terms" className="text-primary hover:underline">
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a href="/privacy" className="text-primary hover:underline">
+              Privacy Policy
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}

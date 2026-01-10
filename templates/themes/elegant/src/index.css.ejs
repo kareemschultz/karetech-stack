@@ -1,0 +1,182 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 5% 98%;
+    --foreground: 30 10% 8%;
+
+    --card: 30 5% 98%;
+    --card-foreground: 30 10% 8%;
+
+    --popover: 30 5% 98%;
+    --popover-foreground: 30 10% 8%;
+
+    --primary: <%= accentColor === 'blue' ? '221.2 83.2% 53.3%' :
+                 accentColor === 'green' ? '142.1 76.2% 36.3%' :
+                 accentColor === 'purple' ? '262.1 83.3% 57.8%' :
+                 accentColor === 'red' ? '346.8 77.2% 49.8%' :
+                 accentColor === 'orange' ? '24.6 95% 53.1%' :
+                 accentColor === 'yellow' ? '47.9 95.8% 53.1%' :
+                 accentColor === 'pink' ? '330.4 81.2% 60.4%' :
+                 '30 40% 15%' %>;
+    --primary-foreground: 30 5% 98%;
+
+    --secondary: 30 5% 92%;
+    --secondary-foreground: 30 10% 15%;
+
+    --muted: 30 5% 94%;
+    --muted-foreground: 30 8% 45%;
+
+    --accent: 30 5% 90%;
+    --accent-foreground: 30 10% 15%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 30 5% 98%;
+
+    --border: 30 8% 85%;
+    --input: 30 8% 85%;
+    --ring: <%= accentColor === 'blue' ? '221.2 83.2% 53.3%' :
+              accentColor === 'green' ? '142.1 76.2% 36.3%' :
+              accentColor === 'purple' ? '262.1 83.3% 57.8%' :
+              accentColor === 'red' ? '346.8 77.2% 49.8%' :
+              accentColor === 'orange' ? '24.6 95% 53.1%' :
+              accentColor === 'yellow' ? '47.9 95.8% 53.1%' :
+              accentColor === 'pink' ? '330.4 81.2% 60.4%' :
+              '30 40% 15%' %>;
+
+    --radius: <%= borderRadius %>rem;
+  }
+
+  .dark {
+    --background: 30 10% 3%;
+    --foreground: 30 5% 95%;
+
+    --card: 30 8% 5%;
+    --card-foreground: 30 5% 95%;
+
+    --popover: 30 8% 5%;
+    --popover-foreground: 30 5% 95%;
+
+    --primary: <%= accentColor === 'blue' ? '217.2 91.2% 59.8%' :
+                 accentColor === 'green' ? '142.1 70.6% 45.3%' :
+                 accentColor === 'purple' ? '263.4 70% 50.4%' :
+                 accentColor === 'red' ? '346.8 77.2% 49.8%' :
+                 accentColor === 'orange' ? '20.5 90.2% 48.2%' :
+                 accentColor === 'yellow' ? '47.9 95.8% 53.1%' :
+                 accentColor === 'pink' ? '330.4 81.2% 60.4%' :
+                 '30 5% 95%' %>;
+    --primary-foreground: 30 10% 3%;
+
+    --secondary: 30 8% 12%;
+    --secondary-foreground: 30 5% 95%;
+
+    --muted: 30 8% 10%;
+    --muted-foreground: 30 5% 65%;
+
+    --accent: 30 8% 15%;
+    --accent-foreground: 30 5% 95%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 30 5% 95%;
+
+    --border: 30 8% 15%;
+    --input: 30 8% 15%;
+    --ring: <%= accentColor === 'blue' ? '224.3 76.3% 48%' :
+              accentColor === 'green' ? '142.1 70.6% 45.3%' :
+              accentColor === 'purple' ? '263.4 70% 50.4%' :
+              accentColor === 'red' ? '346.8 77.2% 49.8%' :
+              accentColor === 'orange' ? '20.5 90.2% 48.2%' :
+              accentColor === 'yellow' ? '47.9 95.8% 53.1%' :
+              accentColor === 'pink' ? '330.4 81.2% 60.4%' :
+              '30 5% 85%' %>;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    <% if (font === 'inter') { %>font-family: 'Inter', sans-serif;<% } else if (font === 'geist') { %>font-family: 'Geist', sans-serif;<% } else if (font === 'mono') { %>font-family: 'JetBrains Mono', 'Fira Code', monospace;<% } else { %>font-family: 'Georgia', 'Times New Roman', serif;<% } %>
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Elegant theme specific styles */
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/95 px-8 py-3 rounded font-medium transition-all duration-300 border-0 shadow-sm hover:shadow-lg tracking-wide;
+    letter-spacing: 0.025em;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-foreground border border-border hover:bg-accent hover:text-accent-foreground px-8 py-3 rounded font-medium transition-all duration-300 shadow-sm hover:shadow-md tracking-wide;
+    letter-spacing: 0.025em;
+  }
+
+  .card {
+    @apply bg-card text-card-foreground rounded-lg border border-border/40 shadow-sm hover:shadow-lg transition-all duration-300;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  }
+
+  .elegant-heading {
+    @apply font-serif text-foreground tracking-tight;
+    font-variant: small-caps;
+    letter-spacing: 0.05em;
+  }
+
+  .elegant-text {
+    @apply leading-relaxed text-muted-foreground;
+    line-height: 1.7;
+  }
+
+  /* Typography refinements */
+  .elegant-quote {
+    @apply border-l-4 border-primary/30 pl-6 italic text-muted-foreground;
+    font-style: italic;
+  }
+
+  .elegant-divider {
+    @apply border-border/30 my-8;
+    background: linear-gradient(to right, transparent, hsl(var(--border)), transparent);
+    height: 1px;
+    border: none;
+  }
+}
+
+/* Elegant animations and effects */
+@layer utilities {
+  .elegant-fade {
+    animation: elegantFade 0.8s ease-out;
+  }
+
+  @keyframes elegantFade {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .elegant-hover {
+    @apply transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg;
+  }
+
+  .text-elegant {
+    @apply text-foreground/90 leading-relaxed tracking-wide;
+  }
+
+  .sophisticated-border {
+    border-image: linear-gradient(135deg,
+      hsl(var(--border) / 0.2),
+      hsl(var(--border)),
+      hsl(var(--border) / 0.2)) 1;
+  }
+}

@@ -1,0 +1,47 @@
+<% if (apiStyle === 'orpc') { %>import { ORPCRouter } from '@orpc/server'
+import { z } from 'zod'
+<% if (database !== 'none') { %>import type { Database } from './db'<% } %>
+
+interface Context {
+  <% if (database !== 'none') { %>db: Database<% } %>
+}
+
+export const router = new ORPCRouter<Context>()
+  .route('hello', {
+    input: z.object({
+      name: z.string().optional().default('World')
+    }),
+    output: z.object({
+      message: z.string(),
+      project: z.string(),
+      timestamp: z.string()
+    }),
+    handler: async (input) => {
+      return {
+        message: `Hello, ${input.name}!`,
+        project: '<%= projectName %>',
+        timestamp: new Date().toISOString()
+      }
+    }
+  })
+  .route('status', {
+    input: z.void(),
+    output: z.object({
+      status: z.literal('ok'),
+      database: z.string().optional(),
+      timestamp: z.string()
+    }),
+    handler: async (_, { <% if (database !== 'none') { %>db<% } %> }) => {
+      return {
+        status: 'ok' as const,
+        <% if (database !== 'none') { %>database: 'connected',<% } %>
+        timestamp: new Date().toISOString()
+      }
+    }
+  })
+
+export type AppRouter = typeof router<% } %>
+
+<% if (apiStyle !== 'orpc') { %>// This file is only used with oRPC
+export const router = null
+export type AppRouter = never<% } %>

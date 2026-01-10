@@ -16,12 +16,14 @@ export const saasPreset: PresetConfig = {
   apiStyle: 'orpc',
 
   // Design
-  uiStyle: 'mira',
+  componentLibrary: 'base-ui',
+  uiStyle: 'maia',
   baseColor: 'zinc',
   accentColor: 'blue',
-  font: 'geist',
-  icons: 'lucide',
-  borderRadius: '0.5',
+  font: 'figtree',
+  icons: 'hugeicons',
+  borderRadius: 'default',
+  menuAccent: 'subtle',
 
   // Testing
   testing: ['playwright'],

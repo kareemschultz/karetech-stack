@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 15%;
+
+    --primary: 0 0% 20%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 97%;
+    --secondary-foreground: 0 0% 20%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 20%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 93%;
+    --input: 0 0% 93%;
+    --ring: 0 0% 20%;
+
+    --radius: <%= borderRadius %>rem;
+  }
+
+  .dark {
+    --background: 0 0% 5%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 5%;
+
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 0 0% 83%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    <% if (font === 'inter') { %>font-family: 'Inter', sans-serif;<% } else if (font === 'geist') { %>font-family: 'Geist', sans-serif;<% } else if (font === 'mono') { %>font-family: 'JetBrains Mono', 'Fira Code', monospace;<% } %>
+  }
+}
+
+/* Minimal theme specific styles */
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-sm font-normal transition-colors border-0 shadow-none;
+  }
+
+  .btn-secondary {
+    @apply bg-background text-foreground border border-border hover:bg-muted px-6 py-2 rounded-sm font-normal transition-colors shadow-none;
+  }
+
+  .card {
+    @apply bg-card text-card-foreground border border-border shadow-none rounded-sm;
+  }
+
+  /* Minimal styling with reduced visual weight */
+  .shadow-sm,
+  .shadow,
+  .shadow-md,
+  .shadow-lg {
+    @apply shadow-none;
+  }
+
+  .rounded-md {
+    @apply rounded-sm;
+  }
+
+  .rounded-lg {
+    @apply rounded;
+  }
+}

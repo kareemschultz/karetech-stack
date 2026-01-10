@@ -5,7 +5,7 @@
 
 import { text, select, confirm, multiselect, isCancel, cancel } from '@clack/prompts';
 import pc from 'picocolors';
-import { ProjectConfig, DatabaseType, AuthProvider, UiStyle, TestingFramework, CiCdPlatform, PbsLevel, AccentColor, BaseColor, FontFamily, IconLibrary, BorderRadius, DeployTarget, AnalyticsProvider, EmailProvider, ErrorTrackingProvider, McpServer } from '../types';
+import { ProjectConfig, DatabaseType, AuthProvider, UiStyle, TestingFramework, CiCdPlatform, PbsLevel, AccentColor, BaseColor, FontFamily, IconLibrary, BorderRadius, DeployTarget, AnalyticsProvider, EmailProvider, ErrorTrackingProvider, McpServer, ComponentLibrary, MenuAccent } from '../types';
 import { validateProjectNamePrompt, validateDescriptionPrompt, validateAuthorPrompt } from '../validation';
 
 // Wizard step interface
@@ -232,6 +232,31 @@ export async function designSystemStep(context: WizardContext): Promise<Partial<
   console.log(pc.dim(WIZARD_STEPS[2].description));
   console.log();
 
+  // Component library selection
+  const componentLibrary = await select({
+    message: 'Choose component library:',
+    options: [
+      {
+        value: 'base-ui',
+        label: 'Base UI',
+        hint: '🚀 Modern, maintained by MUI team (recommended)'
+      },
+      {
+        value: 'radix',
+        label: 'Radix UI',
+        hint: '⚛️ Headless components, primitive focus'
+      }
+    ],
+    initialValue: context.config.componentLibrary || 'base-ui',
+  });
+
+  if (isCancel(componentLibrary)) {
+    cancel('Operation cancelled');
+    process.exit(0);
+  }
+
+  updates.componentLibrary = componentLibrary as ComponentLibrary;
+
   // UI Style selection with previews
   const uiStyle = await select({
     message: 'Choose your UI style:',
@@ -262,7 +287,7 @@ export async function designSystemStep(context: WizardContext): Promise<Partial<
         hint: 'Sharp, professional, and efficient'
       }
     ],
-    initialValue: context.config.uiStyle || 'mira',
+    initialValue: context.config.uiStyle || 'maia',
   });
 
   if (isCancel(uiStyle)) {
@@ -282,7 +307,7 @@ export async function designSystemStep(context: WizardContext): Promise<Partial<
       { value: 'neutral', label: 'Neutral', hint: 'Warm and natural' },
       { value: 'stone', label: 'Stone', hint: 'Earthy and grounded' }
     ],
-    initialValue: context.config.baseColor || 'slate',
+    initialValue: context.config.baseColor || 'zinc',
   });
 
   if (isCancel(baseColor)) {
@@ -319,12 +344,13 @@ export async function designSystemStep(context: WizardContext): Promise<Partial<
   const font = await select({
     message: 'Choose font family:',
     options: [
+      { value: 'figtree', label: 'Figtree', hint: '🌟 Modern geometric sans-serif (recommended)' },
       { value: 'inter', label: 'Inter', hint: 'Versatile and readable' },
       { value: 'geist', label: 'Geist', hint: 'Modern and tech-focused' },
       { value: 'crimson', label: 'Crimson Text', hint: 'Editorial and elegant' },
       { value: 'mono', label: 'JetBrains Mono', hint: 'Developer-focused monospace' }
     ],
-    initialValue: context.config.font || 'inter',
+    initialValue: context.config.font || 'figtree',
   });
 
   if (isCancel(font)) {
@@ -338,11 +364,12 @@ export async function designSystemStep(context: WizardContext): Promise<Partial<
   const icons = await select({
     message: 'Choose icon library:',
     options: [
+      { value: 'hugeicons', label: 'Hugeicons', hint: '🎨 Rounded strokes, matches Maia aesthetic (recommended)' },
       { value: 'lucide', label: 'Lucide', hint: 'Beautiful and consistent' },
       { value: 'heroicons', label: 'Heroicons', hint: 'Clean and modern' },
       { value: 'phosphor', label: 'Phosphor', hint: 'Flexible and expressive' }
     ],
-    initialValue: context.config.icons || 'lucide',
+    initialValue: context.config.icons || 'hugeicons',
   });
 
   if (isCancel(icons)) {
@@ -356,13 +383,14 @@ export async function designSystemStep(context: WizardContext): Promise<Partial<
   const borderRadius = await select({
     message: 'Choose border radius style:',
     options: [
+      { value: 'default', label: 'Default (12px)', hint: '🌟 Maia theme optimized (recommended)' },
       { value: '0', label: 'None (0px)', hint: 'Sharp and geometric' },
       { value: '0.25', label: 'Small (4px)', hint: 'Subtle rounding' },
       { value: '0.5', label: 'Medium (8px)', hint: 'Balanced appearance' },
       { value: '0.75', label: 'Large (12px)', hint: 'Friendly and soft' },
       { value: '1', label: 'Extra Large (16px)', hint: 'Very rounded' }
     ],
-    initialValue: context.config.borderRadius || '0.5',
+    initialValue: context.config.borderRadius || 'default',
   });
 
   if (isCancel(borderRadius)) {
@@ -371,6 +399,23 @@ export async function designSystemStep(context: WizardContext): Promise<Partial<
   }
 
   updates.borderRadius = borderRadius as BorderRadius;
+
+  // Menu accent style
+  const menuAccent = await select({
+    message: 'Choose menu accent style:',
+    options: [
+      { value: 'subtle', label: 'Subtle', hint: '🌟 Modern gray hover states (recommended)' },
+      { value: 'bold', label: 'Bold', hint: 'Colored hover states with accent color' }
+    ],
+    initialValue: context.config.menuAccent || 'subtle',
+  });
+
+  if (isCancel(menuAccent)) {
+    cancel('Operation cancelled');
+    process.exit(0);
+  }
+
+  updates.menuAccent = menuAccent as MenuAccent;
 
   return updates;
 }

@@ -102,12 +102,21 @@ export function resolveDependencies(config: ProjectConfig): { dependencies: Reco
     dependencies['@octokit/rest'] = '^21.0.2';
   }
 
+  // Component library dependencies
+  if (config.componentLibrary === 'base-ui') {
+    dependencies['@base-ui/react'] = '^1.0.0';
+    // Base UI components work alongside Radix primitives for now
+  }
+
   // Icon library dependencies
   if (config.icons === 'heroicons') {
     dependencies['@heroicons/react'] = '^2.2.0';
     delete dependencies['lucide-react'];
   } else if (config.icons === 'phosphor') {
     dependencies['phosphor-react'] = '^1.4.1';
+    delete dependencies['lucide-react'];
+  } else if (config.icons === 'hugeicons') {
+    dependencies['hugeicons-react'] = '^0.3.0';
     delete dependencies['lucide-react'];
   }
 
@@ -347,6 +356,14 @@ export async function generateBaseProject(config: ProjectConfig): Promise<void> 
   const themeTemplateDir = join(templatesDir, 'themes', context.uiStyle);
   if (existsSync(themeTemplateDir)) {
     await copyTemplateDirectory(themeTemplateDir, projectDir, context);
+  }
+
+  // Copy component library specific templates if they exist
+  if (context.componentLibrary) {
+    const componentLibTemplateDir = join(templatesDir, 'component-libraries', context.componentLibrary);
+    if (existsSync(componentLibTemplateDir)) {
+      await copyTemplateDirectory(componentLibTemplateDir, projectDir, context);
+    }
   }
 
   // Copy database-specific templates

@@ -17,12 +17,14 @@ export interface ProjectConfig {
   apiStyle: ApiStyle;
 
   // Design (Step 3)
+  componentLibrary: ComponentLibrary;
   uiStyle: UiStyle;
   baseColor: BaseColor;
   accentColor: AccentColor;
   font: FontFamily;
   icons: IconLibrary;
   borderRadius: BorderRadius;
+  menuAccent: MenuAccent;
 
   // Testing (Step 4)
   testing: TestingFramework[];
@@ -57,6 +59,9 @@ export type AuthProvider = 'email' | 'oauth' | 'magic-links' | 'github';
 // API styles
 export type ApiStyle = 'orpc' | 'trpc' | 'rest';
 
+// Component libraries
+export type ComponentLibrary = 'radix' | 'base-ui';
+
 // UI Styles (shadcn/ui themes)
 export type UiStyle = 'vega' | 'nova' | 'maia' | 'lyra' | 'mira' | 'default';
 
@@ -67,13 +72,16 @@ export type BaseColor = 'slate' | 'gray' | 'zinc' | 'neutral' | 'stone';
 export type AccentColor = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' | 'pink' | 'violet';
 
 // Font families
-export type FontFamily = 'inter' | 'geist' | 'crimson' | 'mono';
+export type FontFamily = 'inter' | 'geist' | 'crimson' | 'mono' | 'figtree';
 
 // Icon libraries
-export type IconLibrary = 'lucide' | 'heroicons' | 'phosphor';
+export type IconLibrary = 'lucide' | 'heroicons' | 'phosphor' | 'hugeicons';
 
 // Border radius options
-export type BorderRadius = '0' | '0.25' | '0.5' | '0.75' | '1';
+export type BorderRadius = '0' | '0.25' | '0.5' | '0.75' | '1' | 'default';
+
+// Menu accent styles
+export type MenuAccent = 'bold' | 'subtle';
 
 // Testing frameworks
 export type TestingFramework = 'playwright' | 'puppeteer' | 'vitest';

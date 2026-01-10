@@ -1,0 +1,264 @@
+# CLAUDE.md — <%= projectName %>
+
+> **Project:** `<%= projectName.toLowerCase().replace(/\s+/g, '-') %>` — <%= description %>
+> **Author:** <%= author %>
+> **Status:** Development
+> **Created:** <%= new Date().toLocaleDateString() %>
+
+---
+
+## 🚨 BEFORE ANYTHING ELSE
+
+1. **Read the constitution:** [constitution.md](constitution.md) — Immutable project principles
+2. **Check project status:** [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) — Current state & blockers
+3. **Review architecture:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — System design decisions
+<% if (pbsLevel !== 'none') { %>4. **Initialize tracking:** Run `bd init` then `bd onboard`<% } %>
+
+---
+
+## 📚 Essential Documentation
+
+| Document | Purpose | Read When |
+|----------|---------|-----------|
+| [constitution.md](constitution.md) | Immutable principles | **Never modify** |
+| [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) | Current state & blockers | Start of each session |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design decisions | Before structural changes |
+| [API.md](docs/API.md) | API documentation | Working with backend |
+<% if (testing.length > 0) { %>| [TESTING.md](docs/TESTING.md) | Testing strategy & setup | Running or writing tests |<% } %>
+<% if (docker) { %>| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deployment & infrastructure | Production deployments |<% } %>
+
+---
+
+## 🎯 Project Overview
+
+**Tech Stack:**
+<% if (database !== 'none') { %>- **Database:** <%= database === 'postgresql' ? 'PostgreSQL' : database === 'turso' ? 'Turso (LibSQL)' : 'SQLite' %> with Drizzle ORM<% } %>
+<% if (auth.length > 0) { %>- **Authentication:** Better Auth with <%= auth.join(', ') %><% } %>
+- **Frontend:** React + TypeScript + Vite + TanStack Router
+- **Backend:** Hono.js
+<% if (apiStyle !== 'none') { %>- **API:** <%= apiStyle === 'orpc' ? 'oRPC' : apiStyle === 'trpc' ? 'tRPC' : 'REST' %><% } %>
+- **Styling:** Tailwind CSS<% if (uiStyle !== 'default') { %> + shadcn/ui (<%= uiStyle %> theme)<% } %>
+<% if (testing.length > 0) { %>- **Testing:** <%= testing.join(', ') %><% if (unitTesting) { %> + Vitest<% } %><% } %>
+<% if (docker) { %>- **Infrastructure:** Docker + CI/CD<% } %>
+
+**Key Features:**
+<% if (pwa) { %>- ✅ Progressive Web App (PWA)<% } %>
+<% if (analytics !== 'none') { %>- ✅ Analytics (<%= analytics %>)<% } %>
+<% if (errorTracking !== 'none') { %>- ✅ Error Tracking (<%= errorTracking %>)<% } %>
+<% if (auth.length > 0) { %>- ✅ Multi-provider Authentication<% } %>
+<% if (database !== 'none') { %>- ✅ Type-safe Database Access<% } %>
+<% if (testing.length > 0) { %>- ✅ Comprehensive Testing Suite<% } %>
+
+---
+
+## 📁 Project Structure
+
+```
+<%= projectName.toLowerCase().replace(/\s+/g, '-') %>/
+├── README.md                    # Project overview & setup
+├── CLAUDE.md                    # ← You are here (AI instructions)
+├── constitution.md              # Immutable project principles
+├── package.json                 # Dependencies & scripts
+├── tsconfig.json               # TypeScript configuration
+├── vite.config.ts              # Build configuration
+<% if (docker) { %>├── Dockerfile                  # Container configuration
+├── docker-compose.yml          # Development environment<% } %>
+│
+├── src/                        # Application source code
+│   ├── main.tsx                # Application entry point
+│   ├── index.css               # Global styles & theme
+│   ├── routes/                 # TanStack Router pages
+│   │   ├── __root.tsx          # Root layout
+│   │   ├── index.tsx           # Homepage
+│   │   └── about.tsx           # About page
+│   ├── components/             # Reusable UI components
+│   │   ├── ui/                 # Base UI components
+│   │   └── layout/             # Layout components
+│   ├── lib/                    # Utilities & configurations
+│   │   ├── utils.ts            # Common utilities
+│   │   └── api.ts              # API client
+<% if (database !== 'none') { %>│   ├── db/                     # Database configuration
+│   │   ├── index.ts            # Database connection
+│   │   ├── schema.ts           # Database schema
+│   │   └── migrations/         # Database migrations<% } %>
+<% if (auth.length > 0) { %>│   ├── auth/                   # Authentication
+│   │   └── config.ts           # Auth configuration<% } %>
+<% if (apiStyle === 'orpc') { %>│   └── api/                   # oRPC API routes<% } %>
+<% if (apiStyle === 'trpc') { %>│   └── trpc/                  # tRPC procedures<% } %>
+│   └── server/                 # Hono.js backend
+│       └── index.ts            # Server entry point
+│
+<% if (testing.length > 0) { %>├── tests/                      # Test files
+<% if (testing.includes('playwright')) { %>│   ├── e2e/                    # Playwright E2E tests<% } %>
+<% if (testing.includes('puppeteer')) { %>│   ├── automation/            # Puppeteer tests<% } %>
+<% if (unitTesting) { %>│   └── unit/                  # Unit tests<% } %>
+│
+<% } %>├── public/                     # Static assets
+└── docs/                       # Project documentation
+    ├── PROJECT_STATUS.md       # Current state & progress
+    ├── ARCHITECTURE.md         # System design
+    ├── API.md                  # API documentation
+<% if (testing.length > 0) { %>    ├── TESTING.md              # Testing guide<% } %>
+<% if (docker) { %>    └── DEPLOYMENT.md           # Deployment guide<% } %>
+```
+
+---
+
+## 🚦 Golden Rules (Never Break)
+
+1. **Constitution is IMMUTABLE** — Never modify `constitution.md`
+2. **Type Safety First** — 100% TypeScript, no `any` types
+3. **Test Before Deploy** — All tests must pass
+4. **Document Changes** — Update docs when changing architecture
+5. **Security First** — Validate all inputs, use environment variables
+6. **Performance Matters** — Optimize for Core Web Vitals
+
+---
+
+<% if (pbsLevel !== 'none') { %>## 🤖 AI Workflow (PBS System)
+
+### Issue Tracking (Beads)
+```bash
+bd init                          # Initialize (first time only)
+bd onboard                       # Get integration instructions
+bd ready                         # What's ready to work on?
+bd list --status open            # All open issues
+bd create "title" -p 1 -t task   # Create new issue
+bd update bd-XXXX --status progress  # Update status
+bd close bd-XXXX --reason "Done"     # Close completed issue
+```
+
+### Development Workflow
+1. **Plan** — Document what you're building in issues
+2. **Build** — Implement with type safety and testing
+3. **Ship** — Deploy with proper CI/CD pipeline
+
+---
+
+<% } %>## 🔧 Development Commands
+
+### Core Development
+```bash
+# Development
+bun dev                         # Start development server
+bun build                       # Build for production
+bun preview                     # Preview production build
+
+# Code Quality
+bun typecheck                   # TypeScript checking
+bun lint                        # ESLint checking
+bun lint:fix                    # Fix ESLint errors
+bun format                      # Format with Prettier
+bun format:check                # Check formatting
+```
+
+<% if (database !== 'none') { %>### Database Commands
+```bash
+bun db:generate                 # Generate migrations
+bun db:migrate                  # Run migrations
+bun db:push                     # Push schema changes (dev)
+bun db:studio                   # Open Drizzle Studio
+<% if (database === 'sqlite') { %>bun db:seed                    # Seed database<% } %>
+```
+
+<% } %><% if (testing.length > 0) { %>### Testing Commands
+```bash
+<% if (testing.includes('playwright')) { %>bun test:e2e                   # Playwright E2E tests
+bun test:e2e:ui                 # E2E tests with UI<% } %>
+<% if (unitTesting) { %>bun test:unit                  # Unit tests with Vitest
+bun test:unit:ui                # Unit tests with UI<% } %>
+<% if (testing.includes('puppeteer')) { %>bun test:automation            # Puppeteer automation tests<% } %>
+<% if (testing.length > 1 || (testing.length > 0 && unitTesting)) { %>bun test:all                   # Run all tests<% } %>
+```
+
+<% } %><% if (docker) { %>### Docker Commands
+```bash
+bun docker:build               # Build Docker image
+bun docker:run                 # Run Docker container
+bun docker:dev                 # Start development environment
+```
+
+<% } %>---
+
+## 📋 Session Protocol
+
+### Start of Session
+1. Check `docs/PROJECT_STATUS.md` for current state
+<% if (pbsLevel !== 'none') { %>2. Run `bd ready` to see available work<% } %>
+3. Review any blockers or dependencies
+
+### During Session
+1. Update issue status when starting work
+2. Document architectural decisions in `docs/ARCHITECTURE.md`
+3. Write tests for new functionality
+4. Update API documentation for backend changes
+
+### End of Session
+1. Update `docs/PROJECT_STATUS.md` with current state
+<% if (pbsLevel !== 'none') { %>2. Close completed issues with `bd close`
+3. Create issues for discovered work<% } %>
+4. Ensure all tests pass before committing
+5. Update documentation if needed
+
+---
+
+## 🚀 Deployment
+
+<% if (docker) { %>### Docker Deployment
+```bash
+# Build and deploy
+docker build -t <%= projectName.toLowerCase().replace(/\s+/g, '-') %> .
+docker run -p 3000:3000 <%= projectName.toLowerCase().replace(/\s+/g, '-') %>
+```
+
+### Environment Variables
+<% } %>Make sure to set the following environment variables:
+
+```env
+# Required
+NODE_ENV=production
+<% if (database === 'postgresql') { %>DATABASE_URL=postgresql://user:pass@host:port/dbname<% } %>
+<% if (database === 'turso') { %>DATABASE_URL=libsql://your-database-url.turso.io
+DATABASE_AUTH_TOKEN=your-auth-token<% } %>
+<% if (database === 'sqlite') { %>DATABASE_URL=./production.db<% } %>
+
+<% if (auth.length > 0) { %># Authentication
+BETTER_AUTH_SECRET=your-secret-key-here
+BETTER_AUTH_URL=https://your-domain.com
+<% auth.forEach(provider => { if (['github', 'google', 'discord', 'microsoft'].includes(provider)) { %>
+# <%= provider.charAt(0).toUpperCase() + provider.slice(1) %> OAuth
+<%= provider.toUpperCase() %>_CLIENT_ID=your-client-id
+<%= provider.toUpperCase() %>_CLIENT_SECRET=your-client-secret<% }}) %>
+
+<% } %><% if (analytics === 'google') { %># Analytics
+VITE_GA_ID=G-XXXXXXXXXX<% } %>
+<% if (analytics === 'posthog') { %># PostHog
+VITE_POSTHOG_KEY=your-posthog-key
+VITE_POSTHOG_HOST=https://app.posthog.com<% } %>
+
+<% if (errorTracking === 'sentry') { %># Error Tracking
+VITE_SENTRY_DSN=https://your-dsn@sentry.io/project<% } %>
+<% if (errorTracking === 'bugsnag') { %>VITE_BUGSNAG_API_KEY=your-bugsnag-key<% } %>
+```
+
+---
+
+## 🔗 Useful Links
+
+| Resource | URL |
+|----------|-----|
+| **Project Repository** | [GitHub Repository URL] |
+<% if (database === 'postgresql') { %>| **PostgreSQL Docs** | https://postgresql.org/docs |<% } %>
+<% if (database === 'turso') { %>| **Turso Docs** | https://docs.turso.tech |<% } %>
+| **Drizzle ORM** | https://orm.drizzle.team |
+| **TanStack Router** | https://tanstack.com/router |
+| **Hono.js** | https://hono.dev |
+<% if (uiStyle !== 'default') { %>| **shadcn/ui** | https://ui.shadcn.com |<% } %>
+<% if (testing.includes('playwright')) { %>| **Playwright** | https://playwright.dev |<% } %>
+<% if (testing.includes('puppeteer')) { %>| **Puppeteer** | https://pptr.dev |<% } %>
+<% if (unitTesting) { %>| **Vitest** | https://vitest.dev |<% } %>
+
+---
+
+*Last Updated: <%= new Date().toLocaleDateString() %>*
+*Generated by KareTech Stack*

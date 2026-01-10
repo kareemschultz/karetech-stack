@@ -1,0 +1,60 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Path mapping */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/utils/*": ["./src/utils/*"]<% if (database !== 'none') { %>,
+      "@/db/*": ["./src/db/*"]<% } %><% if (auth.length > 0) { %>,
+      "@/auth/*": ["./src/auth/*"]<% } %><% if (apiStyle === 'orpc') { %>,
+      "@/api/*": ["./src/api/*"]<% } %><% if (apiStyle === 'trpc') { %>,
+      "@/trpc/*": ["./src/trpc/*"]<% } %>
+    },
+
+    /* Type definitions */
+    "types": [<% if (testing.includes('vitest')) { %>
+      "vitest/globals"<% } %><% if (pwa) { %><%= testing.includes('vitest') ? ',' : '' %>
+      "vite/client",
+      "vite-plugin-pwa/client"<% } %>
+    ]
+  },
+  "include": [
+    "src",
+    "vite.config.ts"<% if (testing.includes('playwright')) { %>,
+    "tests"<% } %><% if (testing.includes('vitest')) { %>,
+    "**/*.test.ts",
+    "**/*.test.tsx"<% } %>
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"<% if (testing.includes('playwright')) { %>,
+    "test-results"<% } %>
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
+}

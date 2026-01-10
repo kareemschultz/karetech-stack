@@ -1,0 +1,305 @@
+const puppeteer = require('puppeteer')
+const config = require('../puppeteer.config')
+
+describe('<%= projectName %> - Puppeteer Tests', () => {
+  let browser
+  let page
+
+  beforeAll(async () => {
+    browser = await puppeteer.launch(config.browser)
+  })
+
+  beforeEach(async () => {
+    page = await browser.newPage()
+    await page.setViewport(config.browser.defaultViewport)
+
+    // Set up environment variables
+    await page.evaluateOnNewDocument((env) => {
+      Object.keys(env).forEach(key => {
+        process.env[key] = env[key]
+      })
+    }, config.environment)
+  })
+
+  afterEach(async () => {
+    if (page) {
+      await page.close()
+    }
+  })
+
+  afterAll(async () => {
+    if (browser) {
+      await browser.close()
+    }
+  })
+
+  describe('Homepage', () => {
+    it('should load and display main content', async () => {
+      await page.goto(config.test.baseUrl)
+
+      // Wait for main content to load
+      await page.waitForSelector('h3', { timeout: config.test.timeout })
+
+      // Check if title contains project name
+      const title = await page.title()
+      expect(title).toContain('<%= projectName %>')
+
+      // Check for main heading
+      const heading = await page.$eval('h3', el => el.textContent)
+      expect(heading).toContain('Welcome to <%= projectName %>')
+
+      // Check for description
+      const description = await page.waitForSelector('text/<%= description %>')
+      expect(description).toBeTruthy()
+    })
+
+    it('should have responsive design', async () => {
+      await page.goto(config.test.baseUrl)
+
+      // Test desktop view
+      await page.setViewport({ width: 1280, height: 720 })
+      await page.waitForSelector('h3')
+
+      let heading = await page.$('h3')
+      expect(heading).toBeTruthy()
+
+      // Test mobile view
+      await page.setViewport({ width: 375, height: 667 })
+      await page.waitForTimeout(500) // Wait for responsive changes
+
+      heading = await page.$('h3')
+      expect(heading).toBeTruthy()
+
+      // Test tablet view
+      await page.setViewport({ width: 768, height: 1024 })
+      await page.waitForTimeout(500)
+
+      heading = await page.$('h3')
+      expect(heading).toBeTruthy()
+    })
+
+    it('should have proper meta tags', async () => {
+      await page.goto(config.test.baseUrl)
+
+      // Check viewport meta tag
+      const viewport = await page.$eval('meta[name="viewport"]', el => el.content)
+      expect(viewport).toContain('width=device-width')
+
+      <% if (description) { %>// Check description meta tag
+      const description = await page.$eval('meta[name="description"]', el => el.content)
+      expect(description).toContain('<%= description %>')
+
+      <% } %>// Check charset
+      const charset = await page.$eval('meta[charset]', el => el.getAttribute('charset'))
+      expect(charset.toLowerCase()).toBe('utf-8')
+    })
+
+    <% if (apiStyle === 'orpc' || apiStyle === 'trpc') { %>it('should make API calls successfully', async () => {
+      // Mock API responses
+      await page.setRequestInterception(true)
+
+      page.on('request', (request) => {
+        if (request.url().includes('/api/')) {
+          request.respond({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ message: 'Hello, World!', project: '<%= projectName %>' })
+          })
+        } else {
+          request.continue()
+        }
+      })
+
+      await page.goto(config.test.baseUrl)
+
+      // Wait for API response to be displayed
+      await page.waitForSelector('text=API Response', { timeout: 10000 })
+
+      const apiResponse = await page.$('text=API Response')
+      expect(apiResponse).toBeTruthy()
+    })
+
+    <% } %>it('should handle errors gracefully', async () => {
+      // Test 404 page
+      await page.goto(`${config.test.baseUrl}/non-existent-page`)
+
+      await page.waitForSelector('text=404', { timeout: config.test.timeout })
+
+      const notFoundText = await page.$('text=Page Not Found')
+      expect(notFoundText).toBeTruthy()
+
+      // Check for home link
+      const homeLink = await page.$('a[href="/"]')
+      expect(homeLink).toBeTruthy()
+    })
+  })
+
+  describe('Navigation', () => {
+    it('should navigate between pages', async () => {
+      await page.goto(config.test.baseUrl)
+
+      // Navigate to about page
+      await page.click('a[href="/about"]')
+      await page.waitForURL('**/about')
+
+      // Check about page content
+      await page.waitForSelector('text=About <%= projectName %>')
+
+      const aboutHeading = await page.$('text=About <%= projectName %>')
+      expect(aboutHeading).toBeTruthy()
+
+      // Navigate back to home
+      await page.click('a[href="/"]')
+      await page.waitForURL(config.test.baseUrl)
+
+      const homeHeading = await page.$('text=Welcome to <%= projectName %>')
+      expect(homeHeading).toBeTruthy()
+    })
+
+    it('should update URL correctly', async () => {
+      await page.goto(config.test.baseUrl)
+
+      // Click about link and check URL
+      await page.click('a[href="/about"]')
+      await page.waitForURL('**/about')
+
+      const url = page.url()
+      expect(url).toContain('/about')
+    })
+  })
+
+  <% if (auth.length > 0) { %>describe('Authentication', () => {
+    it('should display authentication page', async () => {
+      await page.goto(`${config.test.baseUrl}/auth`)
+
+      await page.waitForSelector('h2')
+
+      const heading = await page.$eval('h2', el => el.textContent)
+      expect(heading).toContain('Sign In')
+
+      <% if (auth.includes('email')) { %>// Check for email input
+      const emailInput = await page.$('input[type="email"]')
+      expect(emailInput).toBeTruthy()
+
+      // Check for password input
+      const passwordInput = await page.$('input[type="password"]')
+      expect(passwordInput).toBeTruthy()
+
+      <% } %><% auth.forEach(provider => { if (['github', 'google', 'discord', 'microsoft'].includes(provider)) { %>// Check for <%= provider %> OAuth button
+      const <%= provider %>Button = await page.$('text=Continue with <%= provider.charAt(0).toUpperCase() + provider.slice(1) %>')
+      expect(<%= provider %>Button).toBeTruthy()
+
+      <% }}) %>})
+
+    <% if (auth.includes('email')) { %>it('should handle form validation', async () => {
+      await page.goto(`${config.test.baseUrl}/auth`)
+
+      // Try to submit empty form
+      await page.click('button[type="submit"]')
+
+      // Check that form validation prevents submission
+      const emailInput = await page.$('input[type="email"]')
+      const isRequired = await emailInput.evaluate(el => el.required)
+      expect(isRequired).toBe(true)
+    })
+
+    it('should switch between login and signup modes', async () => {
+      await page.goto(`${config.test.baseUrl}/auth`)
+
+      // Should start in login mode
+      let heading = await page.$eval('h2', el => el.textContent)
+      expect(heading).toContain('Sign In')
+
+      // Switch to signup
+      await page.click('text=Don\'t have an account')
+
+      heading = await page.$eval('h2', el => el.textContent)
+      expect(heading).toContain('Create Account')
+
+      // Should show name field
+      const nameInput = await page.$('input[id="name"]')
+      expect(nameInput).toBeTruthy()
+
+      // Switch back to login
+      await page.click('text=Already have an account')
+
+      heading = await page.$eval('h2', el => el.textContent)
+      expect(heading).toContain('Sign In')
+    })
+
+    <% } %>})
+
+  <% } %>describe('Performance', () => {
+    it('should load within acceptable time', async () => {
+      const startTime = Date.now()
+
+      await page.goto(config.test.baseUrl)
+      await page.waitForSelector('h3')
+
+      const loadTime = Date.now() - startTime
+      expect(loadTime).toBeLessThan(3000) // 3 seconds
+    })
+
+    it('should have good Core Web Vitals', async () => {
+      await page.goto(config.test.baseUrl)
+
+      // Wait for page to fully load
+      await page.waitForLoadState('networkidle')
+
+      // Measure performance metrics
+      const metrics = await page.evaluate(() => {
+        return new Promise((resolve) => {
+          new PerformanceObserver((list) => {
+            const entries = list.getEntries()
+            const vitals = {}
+
+            entries.forEach((entry) => {
+              if (entry.entryType === 'navigation') {
+                vitals.loadTime = entry.loadEventEnd - entry.loadEventStart
+                vitals.domContentLoaded = entry.domContentLoadedEventEnd - entry.domContentLoadedEventStart
+              }
+            })
+
+            resolve(vitals)
+          }).observe({ entryTypes: ['navigation'] })
+        })
+      })
+
+      expect(metrics.loadTime).toBeLessThan(2000) // 2 seconds
+      expect(metrics.domContentLoaded).toBeLessThan(1000) // 1 second
+    })
+  })
+
+  describe('Accessibility', () => {
+    it('should have proper heading hierarchy', async () => {
+      await page.goto(config.test.baseUrl)
+
+      // Check for main heading
+      const h1Count = await page.$$eval('h1', elements => elements.length)
+      const h3Count = await page.$$eval('h3', elements => elements.length)
+
+      expect(h1Count + h3Count).toBeGreaterThan(0)
+    })
+
+    it('should have alt text for images', async () => {
+      await page.goto(config.test.baseUrl)
+
+      const images = await page.$$('img')
+
+      for (const img of images) {
+        const alt = await img.getAttribute('alt')
+        expect(alt).not.toBeNull()
+      }
+    })
+
+    it('should support keyboard navigation', async () => {
+      await page.goto(config.test.baseUrl)
+
+      // Tab through interactive elements
+      await page.keyboard.press('Tab')
+
+      const activeElement = await page.evaluate(() => document.activeElement.tagName)
+      expect(['A', 'BUTTON', 'INPUT']).toContain(activeElement)
+    })
+  })
+})

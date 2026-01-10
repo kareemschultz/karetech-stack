@@ -16,12 +16,14 @@ export const portfolioPreset: PresetConfig = {
   apiStyle: 'orpc',
 
   // Design
-  uiStyle: 'vega',
-  baseColor: 'neutral',
+  componentLibrary: 'base-ui',
+  uiStyle: 'maia',
+  baseColor: 'zinc',
   accentColor: 'violet',
-  font: 'geist',
-  icons: 'lucide',
-  borderRadius: '1',
+  font: 'figtree',
+  icons: 'hugeicons',
+  borderRadius: 'default',
+  menuAccent: 'subtle',
 
   // Testing
   testing: [],

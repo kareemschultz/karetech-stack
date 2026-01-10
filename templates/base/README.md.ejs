@@ -1,0 +1,277 @@
+# <%= projectName %>
+
+<%= description %>
+
+## 🚀 Tech Stack
+
+This project was created with [KareTech Stack](https://github.com/kareemschultz/karetech-stack), an enhanced Better-T-Stack scaffold with modern tooling and DevOps built-in.
+
+### Frontend
+- **React 18** with TypeScript
+- **TanStack Router** for file-based routing
+- **TanStack Query** for server state management
+- **Tailwind CSS** for styling<% if (uiStyle !== 'default') { %>
+- **shadcn/ui** components (<%= uiStyle %> theme)<% } %>
+- **Vite** for lightning-fast development
+
+### Backend
+- **Hono.js** - Ultra-fast web framework
+<% if (database !== 'none') { %>- **<%= database === 'postgresql' ? 'PostgreSQL' : database === 'turso' ? 'Turso (LibSQL)' : 'SQLite' %>** database
+- **Drizzle ORM** for type-safe database operations<% } %>
+<% if (apiStyle === 'orpc') { %>- **oRPC** for type-safe API calls<% } %>
+<% if (apiStyle === 'trpc') { %>- **tRPC** for end-to-end type safety<% } %>
+<% if (auth.length > 0) { %>- **Better Auth** with <%= auth.join(', ') %> providers<% } %>
+
+<% if (testing.length > 0 || docker || analytics !== 'none' || errorTracking !== 'none') { %>### DevOps & Quality
+<% if (testing.includes('playwright')) { %>- **Playwright** for E2E testing<% } %>
+<% if (testing.includes('puppeteer')) { %>- **Puppeteer** for browser automation<% } %>
+<% if (unitTesting) { %>- **Vitest** for unit testing<% } %>
+<% if (docker) { %>- **Docker** for containerization<% } %>
+<% if (analytics !== 'none') { %>- **<%= analytics === 'vercel' ? 'Vercel Analytics' : analytics === 'google' ? 'Google Analytics' : 'PostHog Analytics' %>** for insights<% } %>
+<% if (errorTracking !== 'none') { %>- **<%= errorTracking === 'sentry' ? 'Sentry' : 'Bugsnag' %>** for error tracking<% } %>
+
+<% } %>## 🛠️ Getting Started
+
+### Prerequisites
+- [Bun](https://bun.sh) (recommended) or Node.js 18+
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <your-repo-url>
+   cd <%= projectName.toLowerCase().replace(/[^a-z0-9]/g, '-') %>
+   ```
+
+2. Install dependencies:
+   ```bash
+   bun install
+   ```
+
+<% if (database !== 'none') { %>3. Set up your database:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your database credentials
+   bun db:generate
+   bun db:migrate
+   ```
+
+<% } %>4. Start the development server:
+   ```bash
+   bun dev
+   ```
+
+5. Open your browser to [http://localhost:5173](http://localhost:5173)
+
+## 📜 Available Scripts
+
+### Development
+- `bun dev` - Start development server
+- `bun build` - Build for production
+- `bun preview` - Preview production build locally
+- `bun clean` - Clean build artifacts
+
+### Code Quality
+- `bun typecheck` - Run TypeScript type checking
+- `bun lint` - Run ESLint
+- `bun lint:fix` - Fix ESLint errors automatically
+- `bun format` - Format code with Prettier
+- `bun format:check` - Check code formatting
+
+<% if (testing.length > 0 || unitTesting) { %>### Testing
+<% if (testing.includes('playwright')) { %>- `bun test` - Run Playwright E2E tests
+- `bun test:ui` - Run Playwright with UI mode
+- `bun test:debug` - Debug Playwright tests<% } %>
+<% if (unitTesting) { %>- `bun test:unit` - Run unit tests with Vitest
+- `bun test:unit:ui` - Run unit tests with Vitest UI<% } %>
+<% if (testing.length > 1 || (testing.length > 0 && unitTesting)) { %>- `bun test:all` - Run all tests<% } %>
+
+<% } %><% if (database !== 'none') { %>### Database
+- `bun db:generate` - Generate Drizzle migrations
+- `bun db:migrate` - Run database migrations
+- `bun db:push` - Push schema changes (development)
+- `bun db:studio` - Open Drizzle Studio
+- `bun db:seed` - Seed database with sample data
+
+<% } %><% if (docker) { %>### Docker
+- `bun docker:build` - Build Docker image
+- `bun docker:run` - Run Docker container
+- `bun docker:dev` - Run development environment with Docker Compose
+
+<% } %>## 📂 Project Structure
+
+```
+<%= projectName.toLowerCase().replace(/[^a-z0-9]/g, '-') %>/
+├── public/                  # Static assets
+├── src/
+│   ├── components/          # Reusable UI components
+│   ├── lib/                 # Utility functions and configs
+│   ├── routes/              # TanStack Router routes<% if (database !== 'none') { %>
+│   ├── db/                  # Database schema and migrations<% } %><% if (auth.length > 0) { %>
+│   ├── auth/                # Authentication configuration<% } %><% if (apiStyle === 'orpc') { %>
+│   ├── api/                 # oRPC API routes<% } %><% if (apiStyle === 'trpc') { %>
+│   ├── trpc/                # tRPC procedures and router<% } %>
+│   ├── index.css            # Global styles
+│   └── main.tsx             # Application entry point
+<% if (testing.includes('playwright')) { %>├── tests/                   # Playwright E2E tests<% } %>
+<% if (unitTesting) { %>├── __tests__/              # Unit tests<% } %>
+<% if (docker) { %>├── Dockerfile               # Docker configuration<% } %>
+├── tailwind.config.js       # Tailwind CSS configuration
+├── vite.config.ts           # Vite configuration
+└── package.json
+```
+
+<% if (database !== 'none') { %>## 🗄️ Database
+
+<% if (database === 'postgresql') { %>This project uses PostgreSQL with Drizzle ORM. Make sure you have PostgreSQL installed and running.
+
+### Environment Variables
+```env
+DATABASE_URL=postgresql://username:password@localhost:5432/dbname
+```
+<% } %><% if (database === 'turso') { %>This project uses Turso (LibSQL) with Drizzle ORM.
+
+### Environment Variables
+```env
+DATABASE_URL=libsql://your-database-url.turso.io
+DATABASE_AUTH_TOKEN=your-auth-token
+```
+
+Get started with Turso at [turso.tech](https://turso.tech)
+<% } %><% if (database === 'sqlite') { %>This project uses SQLite with Drizzle ORM.
+
+### Environment Variables
+```env
+DATABASE_URL=./local.db
+```
+<% } %>
+<% } %><% if (auth.length > 0) { %>## 🔐 Authentication
+
+This project uses Better Auth for authentication with the following providers:
+<% auth.forEach(provider => { %>- <%= provider %><% }) %>
+
+### Environment Variables
+```env
+BETTER_AUTH_SECRET=your-secret-key
+BETTER_AUTH_URL=http://localhost:5173
+<% if (auth.includes('github')) { %>GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret<% } %>
+<% if (auth.includes('google')) { %>GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret<% } %>
+<% if (auth.includes('discord')) { %>DISCORD_CLIENT_ID=your-discord-client-id
+DISCORD_CLIENT_SECRET=your-discord-client-secret<% } %>
+<% if (auth.includes('microsoft')) { %>MICROSOFT_CLIENT_ID=your-microsoft-client-id
+MICROSOFT_CLIENT_SECRET=your-microsoft-client-secret<% } %>
+```
+
+<% } %><% if (testing.includes('playwright')) { %>## 🧪 Testing
+
+### Playwright E2E Tests
+```bash
+# Run tests
+bun test
+
+# Run tests with UI mode
+bun test:ui
+
+# Run tests in debug mode
+bun test:debug
+
+# Update snapshots
+bun test:update
+```
+
+<% } %><% if (docker) { %>## 🐳 Docker
+
+### Development with Docker
+```bash
+# Build and run with Docker Compose
+bun docker:dev
+
+# Or manually
+docker build -t <%= projectName.toLowerCase().replace(/[^a-z0-9]/g, '-') %> .
+docker run -p 3000:3000 <%= projectName.toLowerCase().replace(/[^a-z0-9]/g, '-') %>
+```
+
+<% } %><% if (analytics !== 'none' || errorTracking !== 'none') { %>## 📊 Monitoring
+
+<% if (analytics === 'vercel') { %>### Vercel Analytics
+This project includes Vercel Analytics for performance monitoring. Deploy to Vercel to automatically enable analytics.
+<% } %><% if (analytics === 'google') { %>### Google Analytics
+Add your Google Analytics ID to the environment variables:
+```env
+VITE_GA_ID=G-XXXXXXXXXX
+```
+<% } %><% if (analytics === 'posthog') { %>### PostHog Analytics
+Add your PostHog configuration to the environment variables:
+```env
+VITE_POSTHOG_KEY=your-posthog-key
+VITE_POSTHOG_HOST=https://app.posthog.com
+```
+<% } %>
+
+<% if (errorTracking === 'sentry') { %>### Sentry Error Tracking
+Add your Sentry DSN to the environment variables:
+```env
+VITE_SENTRY_DSN=https://your-dsn@sentry.io/project-id
+```
+<% } %><% if (errorTracking === 'bugsnag') { %>### Bugsnag Error Tracking
+Add your Bugsnag API key to the environment variables:
+```env
+VITE_BUGSNAG_API_KEY=your-bugsnag-api-key
+```
+<% } %>
+
+<% } %>## 🚀 Deployment
+
+<% if (docker) { %>### Docker Deployment
+The project includes a production-ready Dockerfile:
+
+```bash
+docker build -t <%= projectName.toLowerCase().replace(/[^a-z0-9]/g, '-') %> .
+docker run -p 3000:3000 <%= projectName.toLowerCase().replace(/[^a-z0-9]/g, '-') %>
+```
+
+<% } %>### Vercel (Recommended)
+```bash
+# Install Vercel CLI
+bun add -g vercel
+
+# Deploy
+vercel
+```
+
+### Netlify
+```bash
+# Build the project
+bun build
+
+# Deploy the dist/ folder to Netlify
+```
+
+## 📚 Documentation
+
+- [KareTech Stack](https://github.com/kareemschultz/karetech-stack) - Project scaffold
+- [Better-T-Stack](https://better-t-stack.dev) - Base stack documentation
+- [TanStack Router](https://tanstack.com/router) - Routing
+- [TanStack Query](https://tanstack.com/query) - Server state management
+- [Tailwind CSS](https://tailwindcss.com) - Styling<% if (uiStyle !== 'default') { %>
+- [shadcn/ui](https://ui.shadcn.com) - UI components<% } %><% if (database !== 'none') { %>
+- [Drizzle ORM](https://orm.drizzle.team) - Database ORM<% } %><% if (testing.includes('playwright')) { %>
+- [Playwright](https://playwright.dev) - E2E testing<% } %>
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+Built with ❤️ using [KareTech Stack](https://github.com/kareemschultz/karetech-stack)

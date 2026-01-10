@@ -1,0 +1,35 @@
+import React from "react"
+import { useSession } from "@/lib/auth-client"
+import { Loading } from "@/components/ui/loading"
+
+interface AuthProviderProps {
+  children: React.ReactNode
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  const { data: session, isLoading } = useSession()
+
+  if (isLoading) {
+    return <Loading />
+  }
+
+  return (
+    <AuthContext.Provider value={{ session }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+interface AuthContextType {
+  session: any | null
+}
+
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined)
+
+export function useAuth() {
+  const context = React.useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider")
+  }
+  return context
+}

@@ -16,12 +16,14 @@ export const ecommercePreset: PresetConfig = {
   apiStyle: 'orpc',
 
   // Design
-  uiStyle: 'nova',
-  baseColor: 'slate',
+  componentLibrary: 'base-ui',
+  uiStyle: 'maia',
+  baseColor: 'zinc',
   accentColor: 'green',
-  font: 'inter',
-  icons: 'heroicons',
-  borderRadius: '0.75',
+  font: 'figtree',
+  icons: 'hugeicons',
+  borderRadius: 'default',
+  menuAccent: 'subtle',
 
   // Testing
   testing: ['playwright', 'puppeteer'],

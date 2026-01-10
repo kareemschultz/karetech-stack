@@ -16,12 +16,14 @@ export const blogPreset: PresetConfig = {
   apiStyle: 'orpc',
 
   // Design
-  uiStyle: 'lyra',
-  baseColor: 'stone',
+  componentLibrary: 'base-ui',
+  uiStyle: 'maia',
+  baseColor: 'zinc',
   accentColor: 'orange',
-  font: 'crimson',
-  icons: 'lucide',
-  borderRadius: '0.5',
+  font: 'figtree',
+  icons: 'hugeicons',
+  borderRadius: 'default',
+  menuAccent: 'subtle',
 
   // Testing
   testing: ['playwright'],

@@ -1,0 +1,70 @@
+import { betterAuth } from "better-auth"
+<% if (database !== 'none') { %>import { drizzleAdapter } from "better-auth/adapters/drizzle"
+import { db } from "@/db"
+import * as schema from "@/db/schema"<% } %>
+
+export const auth = betterAuth({
+  <% if (database !== 'none') { %>database: drizzleAdapter(db, {
+    provider: "<%= database === 'postgresql' ? 'pg' : database === 'turso' ? 'libsql' : 'sqlite' %>",
+    schema: {
+      user: schema.users,
+      session: schema.sessions,
+      account: schema.accounts,
+      verification: schema.verificationTokens,
+    }
+  }),<% } %>
+
+  <% if (auth.includes('email')) { %>emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: true,
+    sendResetPassword: async ({ user, url, token }) => {
+      // TODO: Implement email sending
+      console.log(`Password reset for ${user.email}: ${url}`)
+    },
+    sendVerificationEmail: async ({ user, url, token }) => {
+      // TODO: Implement email sending
+      console.log(`Email verification for ${user.email}: ${url}`)
+    },
+  },<% } %>
+
+  socialProviders: {
+    <% if (auth.includes('github')) { %>github: {
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    },<% } %>
+    <% if (auth.includes('google')) { %>google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    },<% } %>
+    <% if (auth.includes('discord')) { %>discord: {
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+    },<% } %>
+    <% if (auth.includes('microsoft')) { %>microsoft: {
+      clientId: process.env.MICROSOFT_CLIENT_ID!,
+      clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+    },<% } %>
+  },
+
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5, // Cache for 5 minutes
+    },
+  },
+
+  user: {
+    additionalFields: {
+      emailVerified: "email_verified",
+      image: "image",
+    },
+  },
+
+  advanced: {
+    generateId: () => crypto.randomUUID(),
+  },
+})
+
+export type Session = typeof auth.$Infer.Session

@@ -16,12 +16,14 @@ export const devtoolPreset: PresetConfig = {
   apiStyle: 'orpc',
 
   // Design
-  uiStyle: 'mira',
+  componentLibrary: 'base-ui',
+  uiStyle: 'maia',
   baseColor: 'zinc',
   accentColor: 'green',
-  font: 'mono',
-  icons: 'lucide',
-  borderRadius: '0.25',
+  font: 'figtree',
+  icons: 'hugeicons',
+  borderRadius: 'default',
+  menuAccent: 'subtle',
 
   // Testing
   testing: ['vitest'],

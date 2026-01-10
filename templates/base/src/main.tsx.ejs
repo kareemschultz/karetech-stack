@@ -1,0 +1,95 @@
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'<% if (analytics === 'vercel') { %>
+import { Analytics } from '@vercel/analytics/react'<% } %><% if (analytics === 'posthog') { %>
+import posthog from 'posthog-js'<% } %><% if (errorTracking === 'sentry') { %>
+import * as Sentry from '@sentry/react'<% } %><% if (errorTracking === 'bugsnag') { %>
+import Bugsnag from '@bugsnag/js'
+import BugsnagPluginReact from '@bugsnag/plugin-react'<% } %>
+
+// Import the generated route tree
+import { routeTree } from './routeTree.gen'
+import './index.css'<% if (analytics === 'posthog') { %>
+
+// Initialize PostHog
+if (typeof window !== 'undefined' && import.meta.env.VITE_POSTHOG_KEY) {
+  posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
+    api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com',
+    person_profiles: 'identified_only',
+    capture_pageview: false // Disable automatic pageview capture, as we capture manually
+  })
+}<% } %><% if (errorTracking === 'sentry') { %>
+
+// Initialize Sentry
+Sentry.init({
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  integrations: [
+    Sentry.browserTracingIntegration(),
+    Sentry.replayIntegration({
+      maskAllText: false,
+      blockAllMedia: false,
+    }),
+  ],
+  tracesSampleRate: import.meta.env.PROD ? 0.1 : 1.0,
+  replaysSessionSampleRate: import.meta.env.PROD ? 0.1 : 1.0,
+  replaysOnErrorSampleRate: 1.0,
+})<% } %><% if (errorTracking === 'bugsnag') { %>
+
+// Initialize Bugsnag
+Bugsnag.start({
+  apiKey: import.meta.env.VITE_BUGSNAG_API_KEY || '',
+  plugins: [new BugsnagPluginReact()]
+})<% } %>
+
+// Create a new router instance
+const router = createRouter({ routeTree })
+
+// Register the router instance for type safety
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router
+  }
+}
+
+// Create a client for React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: (failureCount, error: any) => {
+        // Don't retry on 4xx errors
+        if (error?.status >= 400 && error?.status < 500) {
+          return false
+        }
+        return failureCount < 2
+      }
+    }
+  }
+})
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+      <% if (analytics === 'vercel') { %><Analytics /><% } %>
+    </QueryClientProvider>
+  )
+}
+
+<% if (errorTracking === 'bugsnag') { %>const BugsnagErrorBoundary = Bugsnag.getPlugin('react')!.createErrorBoundary(React)
+
+function AppWithErrorBoundary() {
+  return (
+    <BugsnagErrorBoundary>
+      <App />
+    </BugsnagErrorBoundary>
+  )
+}
+<% } %>
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <% if (errorTracking === 'bugsnag') { %><<%= 'AppWithErrorBoundary' %> /></% } else { %><App /></% } %>
+  </React.StrictMode>,
+)

@@ -1,0 +1,1280 @@
+# Testing Documentation — <%= projectName %>
+
+> **Testing strategy, setup, and execution guide**
+> Update this document when adding new test frameworks or changing testing approaches.
+
+---
+
+## 🧪 Testing Overview
+
+**<%= projectName %>** implements a comprehensive testing strategy covering multiple layers of the application to ensure reliability, performance, and user experience quality.
+
+### Testing Philosophy
+
+1. **Test Pyramid Approach** — More unit tests, fewer integration tests, minimal E2E tests
+2. **Quality Gates** — All tests must pass before deployment
+3. **Test-Driven Development** — Write tests before or alongside feature implementation
+4. **Continuous Testing** — Automated testing in CI/CD pipeline
+
+### Testing Stack
+
+<% if (testing.length > 0) { %>| Framework | Purpose | Coverage |
+|-----------|---------|----------|
+<% if (testing.includes('playwright')) { %>| **Playwright** | End-to-end testing | User journeys, cross-browser compatibility |<% } %>
+<% if (unitTesting) { %>| **Vitest** | Unit & integration testing | Business logic, utilities, API endpoints |<% } %>
+<% if (testing.includes('puppeteer')) { %>| **Puppeteer** | Browser automation | Performance, accessibility, regression |<% } %>
+| **Testing Library** | Component testing | React component behavior |
+| **MSW** | API mocking | HTTP request interception |
+<% } else { %>This project does not have testing frameworks configured.
+
+To add testing:
+1. Regenerate with testing options selected
+2. Or manually add testing frameworks following this guide
+<% } %>
+
+---
+
+<% if (testing.includes('playwright')) { %>## 🎭 End-to-End Testing (Playwright)
+
+### Setup & Configuration
+
+**Installation:**
+```bash
+bun add -D @playwright/test
+bunx playwright install
+```
+
+**Configuration:** `playwright.config.ts`
+```typescript
+import { defineConfig, devices } from '@playwright/test'
+
+export default defineConfig({
+  testDir: './tests/e2e',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: 'html',
+  use: {
+    baseURL: 'http://localhost:5173',
+    trace: 'on-first-retry',
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+    {
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
+    },
+  ],
+  webServer: {
+    command: 'bun run dev',
+    url: 'http://localhost:5173',
+    reuseExistingServer: !process.env.CI,
+  },
+})
+```
+
+### Test Structure
+
+```
+tests/e2e/
+├── homepage.spec.ts          # Homepage functionality
+├── navigation.spec.ts        # Site navigation
+<% if (auth.length > 0) { %>├── auth.spec.ts              # Authentication flows<% } %>
+├── responsive.spec.ts        # Responsive design
+├── accessibility.spec.ts     # Accessibility compliance
+└── performance.spec.ts       # Core Web Vitals
+```
+
+### Sample E2E Tests
+
+#### Homepage Test
+```typescript
+// tests/e2e/homepage.spec.ts
+import { test, expect } from '@playwright/test'
+
+test.describe('Homepage', () => {
+  test('should load and display main content', async ({ page }) => {
+    await page.goto('/')
+
+    // Wait for main content
+    await expect(page.getByRole('heading', { name: 'Welcome to <%= projectName %>' })).toBeVisible()
+
+    // Check page title
+    await expect(page).toHaveTitle(/<%= projectName %>/)
+
+    // Verify description
+    await expect(page.getByText('<%= description %>')).toBeVisible()
+  })
+
+  test('should have working navigation', async ({ page }) => {
+    await page.goto('/')
+
+    // Click about link
+    await page.getByRole('link', { name: 'About' }).click()
+    await expect(page).toHaveURL('/about')
+
+    // Check about page content
+    await expect(page.getByRole('heading', { name: 'About <%= projectName %>' })).toBeVisible()
+
+    // Navigate back to home
+    await page.getByRole('link', { name: 'Home' }).click()
+    await expect(page).toHaveURL('/')
+  })
+})
+```
+
+<% if (auth.length > 0) { %>#### Authentication Tests
+```typescript
+// tests/e2e/auth.spec.ts
+import { test, expect } from '@playwright/test'
+
+test.describe('Authentication', () => {
+  test('should display login form', async ({ page }) => {
+    await page.goto('/auth')
+
+    await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible()
+
+    <% if (auth.includes('email')) { %>// Check email/password form
+    await expect(page.getByRole('textbox', { name: 'Email' })).toBeVisible()
+    await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible()
+    <% } %>
+
+    <% auth.forEach(provider => { if (['github', 'google', 'discord', 'microsoft'].includes(provider)) { %>// Check <%= provider %> OAuth button
+    await expect(page.getByRole('button', { name: 'Continue with <%= provider.charAt(0).toUpperCase() + provider.slice(1) %>' })).toBeVisible()
+    <% }}) %>
+  })
+
+  <% if (auth.includes('email')) { %>test('should validate email format', async ({ page }) => {
+    await page.goto('/auth')
+
+    // Enter invalid email
+    await page.getByRole('textbox', { name: 'Email' }).fill('invalid-email')
+    await page.getByRole('button', { name: 'Sign In' }).click()
+
+    // Check for validation error
+    await expect(page.getByText('Please enter a valid email address')).toBeVisible()
+  })
+
+  test('should switch between login and signup', async ({ page }) => {
+    await page.goto('/auth')
+
+    // Should start in login mode
+    await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible()
+
+    // Switch to signup
+    await page.getByRole('link', { name: "Don't have an account?" }).click()
+    await expect(page.getByRole('heading', { name: 'Create Account' })).toBeVisible()
+    await expect(page.getByRole('textbox', { name: 'Name' })).toBeVisible()
+
+    // Switch back to login
+    await page.getByRole('link', { name: 'Already have an account?' }).click()
+    await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible()
+  })
+  <% } %>
+})
+```
+<% } %>
+
+#### Responsive Design Tests
+```typescript
+// tests/e2e/responsive.spec.ts
+import { test, expect } from '@playwright/test'
+
+const viewports = [
+  { name: 'mobile', width: 375, height: 667 },
+  { name: 'tablet', width: 768, height: 1024 },
+  { name: 'desktop', width: 1280, height: 720 },
+  { name: 'wide', width: 1920, height: 1080 },
+]
+
+viewports.forEach(({ name, width, height }) => {
+  test(`should work on ${name} viewport`, async ({ page }) => {
+    await page.setViewportSize({ width, height })
+    await page.goto('/')
+
+    // Main content should be visible
+    await expect(page.getByRole('heading', { name: 'Welcome to <%= projectName %>' })).toBeVisible()
+
+    // Navigation should be accessible
+    const navToggle = page.getByRole('button', { name: 'Menu' })
+    if (width < 768) {
+      // Mobile: check for hamburger menu
+      await expect(navToggle).toBeVisible()
+      await navToggle.click()
+      await expect(page.getByRole('link', { name: 'About' })).toBeVisible()
+    } else {
+      // Desktop: check for inline navigation
+      await expect(page.getByRole('link', { name: 'About' })).toBeVisible()
+    }
+  })
+})
+```
+
+### Performance Testing
+```typescript
+// tests/e2e/performance.spec.ts
+import { test, expect } from '@playwright/test'
+
+test.describe('Performance', () => {
+  test('should meet Core Web Vitals thresholds', async ({ page }) => {
+    await page.goto('/')
+
+    // Wait for page load
+    await page.waitForLoadState('networkidle')
+
+    // Get Web Vitals
+    const vitals = await page.evaluate(() => {
+      return new Promise((resolve) => {
+        const observer = new PerformanceObserver((list) => {
+          const entries = list.getEntries()
+          const vitals: Record<string, number> = {}
+
+          entries.forEach((entry) => {
+            if (entry.name === 'FCP') vitals.fcp = entry.value
+            if (entry.name === 'LCP') vitals.lcp = entry.value
+            if (entry.name === 'FID') vitals.fid = entry.value
+            if (entry.name === 'CLS') vitals.cls = entry.value
+          })
+
+          if (Object.keys(vitals).length > 0) {
+            resolve(vitals)
+          }
+        })
+
+        observer.observe({ entryTypes: ['paint', 'largest-contentful-paint', 'first-input', 'layout-shift'] })
+
+        // Fallback timeout
+        setTimeout(() => resolve({}), 5000)
+      })
+    })
+
+    // Assert thresholds
+    if (vitals.lcp) expect(vitals.lcp).toBeLessThan(2500) // LCP < 2.5s
+    if (vitals.fid) expect(vitals.fid).toBeLessThan(100)  // FID < 100ms
+    if (vitals.cls) expect(vitals.cls).toBeLessThan(0.1)  // CLS < 0.1
+  })
+
+  test('should load within acceptable time', async ({ page }) => {
+    const startTime = Date.now()
+
+    await page.goto('/')
+    await page.waitForSelector('h1')
+
+    const loadTime = Date.now() - startTime
+    expect(loadTime).toBeLessThan(3000) // 3 seconds
+  })
+})
+```
+
+### Running E2E Tests
+```bash
+# Run all E2E tests
+bun test:e2e
+
+# Run with UI mode
+bun test:e2e --ui
+
+# Run specific browser
+bun test:e2e --project=chromium
+
+# Run in headed mode
+bun test:e2e --headed
+
+# Generate report
+bun test:e2e --reporter=html
+```
+
+<% } %>---
+
+<% if (unitTesting) { %>## ⚡ Unit Testing (Vitest)
+
+### Setup & Configuration
+
+**Installation:**
+```bash
+bun add -D vitest @testing-library/react @testing-library/jest-dom jsdom
+```
+
+**Configuration:** `vitest.config.ts`
+```typescript
+import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./tests/setup.ts'],
+    globals: true,
+    css: true,
+  },
+  resolve: {
+    alias: {
+      '@': '/src',
+    },
+  },
+})
+```
+
+**Test Setup:** `tests/setup.ts`
+```typescript
+import '@testing-library/jest-dom'
+import { expect, afterEach } from 'vitest'
+import { cleanup } from '@testing-library/react'
+
+// Cleanup after each test
+afterEach(() => {
+  cleanup()
+})
+```
+
+### Test Structure
+
+```
+tests/unit/
+├── components/               # Component tests
+│   ├── ui/                  # UI component tests
+│   │   ├── button.test.tsx
+│   │   ├── input.test.tsx
+│   │   └── card.test.tsx
+│   └── layout/              # Layout component tests
+│       ├── header.test.tsx
+│       └── navigation.test.tsx
+├── lib/                     # Utility tests
+│   ├── utils.test.ts
+│   └── api.test.ts
+<% if (database !== 'none') { %>├── db/                      # Database tests
+│   ├── queries.test.ts
+│   └── schema.test.ts<% } %>
+└── server/                  # Server tests
+    ├── routes.test.ts
+    └── middleware.test.ts
+```
+
+### Component Testing
+
+#### UI Component Tests
+```typescript
+// tests/unit/components/ui/button.test.tsx
+import { render, screen, fireEvent } from '@testing-library/react'
+import { Button } from '@/components/ui/button'
+
+describe('Button Component', () => {
+  test('renders button with text', () => {
+    render(<Button>Click me</Button>)
+
+    expect(screen.getByRole('button', { name: 'Click me' })).toBeInTheDocument()
+  })
+
+  test('calls onClick when clicked', () => {
+    const handleClick = vi.fn()
+    render(<Button onClick={handleClick}>Click me</Button>)
+
+    fireEvent.click(screen.getByRole('button'))
+    expect(handleClick).toHaveBeenCalledTimes(1)
+  })
+
+  test('applies variant styles correctly', () => {
+    render(<Button variant="destructive">Delete</Button>)
+
+    const button = screen.getByRole('button')
+    expect(button).toHaveClass('bg-destructive')
+  })
+
+  test('disables button when loading', () => {
+    render(<Button loading>Loading</Button>)
+
+    const button = screen.getByRole('button')
+    expect(button).toBeDisabled()
+    expect(screen.getByText('Loading')).toBeInTheDocument()
+  })
+})
+```
+
+#### Layout Component Tests
+```typescript
+// tests/unit/components/layout/header.test.tsx
+import { render, screen } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
+import { Header } from '@/components/layout/header'
+
+const renderWithRouter = (component: React.ReactElement) => {
+  return render(
+    <BrowserRouter>
+      {component}
+    </BrowserRouter>
+  )
+}
+
+describe('Header Component', () => {
+  test('renders logo and navigation', () => {
+    renderWithRouter(<Header />)
+
+    expect(screen.getByText('<%= projectName %>')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'About' })).toBeInTheDocument()
+  })
+
+  <% if (auth.length > 0) { %>test('shows auth buttons when not logged in', () => {
+    renderWithRouter(<Header />)
+
+    expect(screen.getByRole('link', { name: 'Sign In' })).toBeInTheDocument()
+  })
+  <% } %>
+
+  test('is accessible', () => {
+    renderWithRouter(<Header />)
+
+    const nav = screen.getByRole('navigation')
+    expect(nav).toBeInTheDocument()
+    expect(nav).toHaveAccessibleName()
+  })
+})
+```
+
+### Utility Function Tests
+
+```typescript
+// tests/unit/lib/utils.test.ts
+import { cn, formatDate, slugify } from '@/lib/utils'
+
+describe('Utility Functions', () => {
+  describe('cn (className merger)', () => {
+    test('merges class names correctly', () => {
+      expect(cn('btn', 'btn-primary')).toBe('btn btn-primary')
+    })
+
+    test('handles conditional classes', () => {
+      expect(cn('btn', { 'btn-primary': true, 'btn-secondary': false })).toBe('btn btn-primary')
+    })
+
+    test('removes falsy values', () => {
+      expect(cn('btn', null, undefined, false, 'btn-primary')).toBe('btn btn-primary')
+    })
+  })
+
+  describe('formatDate', () => {
+    test('formats date correctly', () => {
+      const date = new Date('2024-01-01T00:00:00.000Z')
+      expect(formatDate(date)).toBe('January 1, 2024')
+    })
+
+    test('handles different formats', () => {
+      const date = new Date('2024-01-01T00:00:00.000Z')
+      expect(formatDate(date, 'short')).toBe('Jan 1, 2024')
+    })
+  })
+
+  describe('slugify', () => {
+    test('converts text to slug', () => {
+      expect(slugify('Hello World')).toBe('hello-world')
+    })
+
+    test('handles special characters', () => {
+      expect(slugify('Hello, World!')).toBe('hello-world')
+    })
+
+    test('handles unicode characters', () => {
+      expect(slugify('café')).toBe('cafe')
+    })
+  })
+})
+```
+
+<% if (database !== 'none') { %>### Database Testing
+
+```typescript
+// tests/unit/db/queries.test.ts
+import { describe, test, expect, beforeEach } from 'vitest'
+import { createTestDb } from '../helpers/db'
+import { getUserById, createUser } from '@/db/queries'
+
+describe('Database Queries', () => {
+  let db: ReturnType<typeof createTestDb>
+
+  beforeEach(async () => {
+    db = createTestDb()
+    await db.migrate()
+  })
+
+  describe('getUserById', () => {
+    test('returns user when found', async () => {
+      const userData = {
+        name: 'John Doe',
+        email: 'john@example.com'
+      }
+
+      const createdUser = await createUser(userData)
+      const foundUser = await getUserById(createdUser.id)
+
+      expect(foundUser).toEqual(expect.objectContaining(userData))
+    })
+
+    test('returns null when user not found', async () => {
+      const result = await getUserById('non-existent-id')
+      expect(result).toBeNull()
+    })
+  })
+
+  describe('createUser', () => {
+    test('creates user with valid data', async () => {
+      const userData = {
+        name: 'Jane Smith',
+        email: 'jane@example.com'
+      }
+
+      const user = await createUser(userData)
+
+      expect(user).toEqual(expect.objectContaining({
+        ...userData,
+        id: expect.any(String),
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date)
+      }))
+    })
+
+    test('throws error for duplicate email', async () => {
+      const userData = {
+        name: 'John Doe',
+        email: 'duplicate@example.com'
+      }
+
+      await createUser(userData)
+
+      await expect(createUser(userData)).rejects.toThrow('Email already exists')
+    })
+  })
+})
+```
+<% } %>
+
+### API Testing with MSW
+
+```typescript
+// tests/unit/api/posts.test.ts
+import { setupServer } from 'msw/node'
+import { http, HttpResponse } from 'msw'
+import { beforeAll, afterAll, afterEach, describe, test, expect } from 'vitest'
+import { getPosts, createPost } from '@/lib/api'
+
+const server = setupServer(
+  http.get('/api/posts', () => {
+    return HttpResponse.json({
+      posts: [
+        {
+          id: '1',
+          title: 'Test Post',
+          content: 'Test content',
+          author: { id: '1', name: 'Test Author' },
+          createdAt: '2024-01-01T00:00:00.000Z'
+        }
+      ],
+      pagination: { page: 1, limit: 10, total: 1, pages: 1 }
+    })
+  }),
+
+  http.post('/api/posts', () => {
+    return HttpResponse.json({
+      post: {
+        id: '2',
+        title: 'New Post',
+        content: 'New content',
+        author: { id: '1', name: 'Test Author' },
+        createdAt: '2024-01-01T00:00:00.000Z'
+      }
+    }, { status: 201 })
+  })
+)
+
+beforeAll(() => server.listen())
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
+
+describe('Posts API', () => {
+  test('getPosts returns posts list', async () => {
+    const result = await getPosts()
+
+    expect(result.posts).toHaveLength(1)
+    expect(result.posts[0].title).toBe('Test Post')
+    expect(result.pagination.total).toBe(1)
+  })
+
+  test('createPost creates new post', async () => {
+    const postData = {
+      title: 'New Post',
+      content: 'New content'
+    }
+
+    const result = await createPost(postData)
+
+    expect(result.post.title).toBe('New Post')
+    expect(result.post.id).toBe('2')
+  })
+})
+```
+
+### Running Unit Tests
+```bash
+# Run all unit tests
+bun test:unit
+
+# Run with watch mode
+bun test:unit --watch
+
+# Run with coverage
+bun test:unit --coverage
+
+# Run specific test file
+bun test:unit button.test.tsx
+
+# Run tests in UI mode
+bun test:unit --ui
+```
+
+<% } %>---
+
+<% if (testing.includes('puppeteer')) { %>## 🤖 Browser Automation (Puppeteer)
+
+### Setup & Configuration
+
+**Installation:**
+```bash
+bun add -D puppeteer jest
+```
+
+**Configuration:** `puppeteer.config.js`
+```javascript
+module.exports = {
+  browser: {
+    headless: process.env.CI ? true : 'new',
+    slowMo: process.env.CI ? 0 : 50,
+    devtools: !process.env.CI,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+    ],
+    defaultViewport: {
+      width: 1280,
+      height: 720,
+    },
+  },
+  test: {
+    baseUrl: 'http://localhost:5173',
+    timeout: 30000,
+    retries: process.env.CI ? 2 : 0,
+  },
+}
+```
+
+### Test Structure
+
+```
+tests/automation/
+├── performance.spec.js       # Performance testing
+├── accessibility.spec.js     # Accessibility compliance
+├── visual-regression.spec.js # Visual regression testing
+├── seo.spec.js              # SEO optimization
+└── browser-compat.spec.js   # Cross-browser compatibility
+```
+
+### Performance Testing
+
+```javascript
+// tests/automation/performance.spec.js
+const puppeteer = require('puppeteer')
+const config = require('../../puppeteer.config')
+
+describe('Performance Testing', () => {
+  let browser, page
+
+  beforeAll(async () => {
+    browser = await puppeteer.launch(config.browser)
+  })
+
+  beforeEach(async () => {
+    page = await browser.newPage()
+  })
+
+  afterEach(async () => {
+    await page.close()
+  })
+
+  afterAll(async () => {
+    await browser.close()
+  })
+
+  test('should meet Core Web Vitals thresholds', async () => {
+    await page.goto(config.test.baseUrl)
+
+    // Enable performance tracking
+    await page.tracing.start({ path: 'performance.json', screenshots: true })
+
+    await page.waitForSelector('h1')
+
+    await page.tracing.stop()
+
+    // Get performance metrics
+    const metrics = await page.metrics()
+
+    expect(metrics.TaskDuration).toBeLessThan(50) // Main thread blocking
+    expect(metrics.JSHeapUsedSize).toBeLessThan(50 * 1024 * 1024) // 50MB heap limit
+
+    // Check paint metrics
+    const paintMetrics = await page.evaluate(() => {
+      const entries = performance.getEntriesByType('paint')
+      const fcp = entries.find(entry => entry.name === 'first-contentful-paint')
+      const lcp = entries.find(entry => entry.name === 'largest-contentful-paint')
+
+      return {
+        fcp: fcp?.startTime,
+        lcp: lcp?.startTime
+      }
+    })
+
+    if (paintMetrics.fcp) expect(paintMetrics.fcp).toBeLessThan(1800) // FCP < 1.8s
+    if (paintMetrics.lcp) expect(paintMetrics.lcp).toBeLessThan(2500) // LCP < 2.5s
+  })
+
+  test('should optimize resource loading', async () => {
+    const responses = []
+
+    page.on('response', response => {
+      responses.push({
+        url: response.url(),
+        status: response.status(),
+        size: response.headers()['content-length']
+      })
+    })
+
+    await page.goto(config.test.baseUrl)
+    await page.waitForLoadState('networkidle')
+
+    // Check for efficient resource loading
+    const jsFiles = responses.filter(r => r.url.includes('.js'))
+    const cssFiles = responses.filter(r => r.url.includes('.css'))
+    const images = responses.filter(r => r.url.includes('.png') || r.url.includes('.jpg'))
+
+    // Assert reasonable file sizes
+    jsFiles.forEach(file => {
+      const size = parseInt(file.size || '0')
+      expect(size).toBeLessThan(500000) // JS bundles < 500KB
+    })
+
+    cssFiles.forEach(file => {
+      const size = parseInt(file.size || '0')
+      expect(size).toBeLessThan(100000) // CSS files < 100KB
+    })
+  })
+})
+```
+
+### Accessibility Testing
+
+```javascript
+// tests/automation/accessibility.spec.js
+const puppeteer = require('puppeteer')
+const axe = require('axe-puppeteer')
+
+describe('Accessibility Testing', () => {
+  let browser, page
+
+  beforeAll(async () => {
+    browser = await puppeteer.launch({
+      headless: process.env.CI ? true : false,
+    })
+  })
+
+  beforeEach(async () => {
+    page = await browser.newPage()
+  })
+
+  afterEach(async () => {
+    await page.close()
+  })
+
+  afterAll(async () => {
+    await browser.close()
+  })
+
+  test('should meet WCAG 2.1 AA standards', async () => {
+    await page.goto('http://localhost:5173')
+    await page.waitForSelector('main')
+
+    const results = await axe(page).analyze()
+
+    expect(results.violations.length).toBe(0)
+
+    // Log any violations for debugging
+    if (results.violations.length > 0) {
+      console.log('Accessibility violations:', results.violations)
+    }
+  })
+
+  test('should support keyboard navigation', async () => {
+    await page.goto('http://localhost:5173')
+
+    // Tab through interactive elements
+    await page.keyboard.press('Tab')
+
+    let activeElement = await page.evaluate(() => document.activeElement.tagName)
+    expect(['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA']).toContain(activeElement)
+
+    // Continue tabbing
+    await page.keyboard.press('Tab')
+    activeElement = await page.evaluate(() => document.activeElement.tagName)
+    expect(['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA']).toContain(activeElement)
+  })
+
+  test('should have proper heading hierarchy', async () => {
+    await page.goto('http://localhost:5173')
+
+    const headings = await page.$$eval('h1, h2, h3, h4, h5, h6', elements =>
+      elements.map(el => ({
+        tag: el.tagName.toLowerCase(),
+        text: el.textContent.trim()
+      }))
+    )
+
+    // Should start with h1
+    expect(headings[0].tag).toBe('h1')
+
+    // Check for logical heading order
+    let currentLevel = 1
+    headings.forEach(heading => {
+      const level = parseInt(heading.tag.slice(1))
+      expect(level).toBeLessThanOrEqual(currentLevel + 1)
+      currentLevel = Math.max(currentLevel, level)
+    })
+  })
+})
+```
+
+### Visual Regression Testing
+
+```javascript
+// tests/automation/visual-regression.spec.js
+const puppeteer = require('puppeteer')
+const pixelmatch = require('pixelmatch')
+const fs = require('fs')
+const path = require('path')
+
+describe('Visual Regression Testing', () => {
+  let browser, page
+
+  beforeAll(async () => {
+    browser = await puppeteer.launch({ headless: true })
+  })
+
+  beforeEach(async () => {
+    page = await browser.newPage()
+    await page.setViewport({ width: 1280, height: 720 })
+  })
+
+  afterEach(async () => {
+    await page.close()
+  })
+
+  afterAll(async () => {
+    await browser.close()
+  })
+
+  const screenshotPath = (name) => path.join(__dirname, '../screenshots', `${name}.png`)
+  const baselinePath = (name) => path.join(__dirname, '../baselines', `${name}.png`)
+
+  test('homepage visual comparison', async () => {
+    await page.goto('http://localhost:5173')
+    await page.waitForSelector('main')
+
+    const screenshotBuffer = await page.screenshot({ fullPage: true })
+
+    // Save current screenshot
+    const currentPath = screenshotPath('homepage')
+    fs.writeFileSync(currentPath, screenshotBuffer)
+
+    // Compare with baseline if it exists
+    const baselineFile = baselinePath('homepage')
+    if (fs.existsSync(baselineFile)) {
+      const baselineBuffer = fs.readFileSync(baselineFile)
+
+      const diff = pixelmatch(
+        baselineBuffer,
+        screenshotBuffer,
+        null,
+        1280,
+        720,
+        { threshold: 0.2 }
+      )
+
+      // Allow up to 1% pixel difference
+      const diffPercentage = (diff / (1280 * 720)) * 100
+      expect(diffPercentage).toBeLessThan(1)
+    } else {
+      // Create baseline if it doesn't exist
+      fs.writeFileSync(baselineFile, screenshotBuffer)
+      console.log('Created baseline screenshot for homepage')
+    }
+  })
+
+  const pages = ['/', '/about']
+  const viewports = [
+    { name: 'mobile', width: 375, height: 667 },
+    { name: 'tablet', width: 768, height: 1024 },
+    { name: 'desktop', width: 1280, height: 720 },
+  ]
+
+  pages.forEach(url => {
+    viewports.forEach(viewport => {
+      test(`${url} on ${viewport.name}`, async () => {
+        await page.setViewport(viewport)
+        await page.goto(`http://localhost:5173${url}`)
+        await page.waitForSelector('main')
+
+        const screenshot = await page.screenshot({ fullPage: true })
+        const testName = `${url.replace('/', 'home')}-${viewport.name}`
+
+        // Save and compare screenshots
+        const currentPath = screenshotPath(testName)
+        const baselineFile = baselinePath(testName)
+
+        fs.writeFileSync(currentPath, screenshot)
+
+        if (fs.existsSync(baselineFile)) {
+          const baseline = fs.readFileSync(baselineFile)
+          const diff = pixelmatch(baseline, screenshot, null, viewport.width, viewport.height, { threshold: 0.2 })
+          const diffPercentage = (diff / (viewport.width * viewport.height)) * 100
+          expect(diffPercentage).toBeLessThan(1)
+        } else {
+          fs.writeFileSync(baselineFile, screenshot)
+        }
+      })
+    })
+  })
+})
+```
+
+### Running Puppeteer Tests
+```bash
+# Run all automation tests
+bun test:automation
+
+# Run specific test suite
+bun test:automation -- --testNamePattern="Performance"
+
+# Run with different browser
+BROWSER=firefox bun test:automation
+
+# Generate test report
+bun test:automation -- --json --outputFile=automation-results.json
+```
+
+<% } %>---
+
+## 📊 Test Coverage & Quality
+
+### Coverage Targets
+
+| Test Type | Coverage Target | Critical Paths |
+|-----------|----------------|----------------|
+<% if (unitTesting) { %>| **Unit Tests** | >80% overall | Business logic: >95% |<% } %>
+<% if (testing.includes('playwright')) { %>| **E2E Tests** | >90% user journeys | Critical flows: 100% |<% } %>
+<% if (testing.includes('puppeteer')) { %>| **Automation Tests** | Performance: 100% | Core Web Vitals: 100% |<% } %>
+
+### Quality Gates
+
+**Pre-commit Requirements:**
+- All tests pass
+- Coverage thresholds met
+- No critical accessibility violations
+- Performance budgets respected
+
+**CI/CD Requirements:**
+- Multi-browser compatibility
+- Cross-device testing
+- Security vulnerability scans
+- Performance regression checks
+
+### Coverage Reports
+
+<% if (unitTesting) { %>**Unit Test Coverage:**
+```bash
+# Generate coverage report
+bun test:unit --coverage
+
+# View HTML report
+open coverage/index.html
+
+# Coverage thresholds in vitest.config.ts
+test: {
+  coverage: {
+    statements: 80,
+    branches: 80,
+    functions: 80,
+    lines: 80,
+  }
+}
+```
+<% } %>
+
+<% if (testing.includes('playwright')) { %>**E2E Test Reports:**
+```bash
+# Generate Playwright report
+bun test:e2e --reporter=html
+
+# View test report
+bunx playwright show-report
+```
+<% } %>
+
+---
+
+## 🚀 CI/CD Integration
+
+### GitHub Actions Workflow
+
+```yaml
+# .github/workflows/test.yml
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        run: bun install
+
+      <% if (unitTesting) { %>- name: Run unit tests
+        run: bun test:unit --coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3<% } %>
+
+  <% if (testing.includes('playwright')) { %>e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install Playwright
+        run: bunx playwright install --with-deps
+
+      - name: Run E2E tests
+        run: bun test:e2e
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/<% } %>
+
+  <% if (testing.includes('puppeteer')) { %>automation-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run automation tests
+        run: bun test:automation<% } %>
+```
+
+### Local Development Workflow
+
+```bash
+# Pre-commit hook (package.json scripts)
+{
+  "scripts": {
+    "pre-commit": "bun run typecheck && bun run lint && bun test:unit",
+    <% if (testing.includes('playwright')) { %>"test:ci": "bun test:unit && bun test:e2e --reporter=line",<% } %>
+    "test:watch": "bun test:unit --watch"
+  }
+}
+```
+
+---
+
+## 🔧 Test Utilities & Helpers
+
+### Test Database Setup
+
+<% if (database !== 'none') { %>```typescript
+// tests/helpers/db.ts
+import Database from 'better-sqlite3'
+import { drizzle } from 'drizzle-orm/better-sqlite3'
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
+import * as schema from '@/db/schema'
+
+export function createTestDb() {
+  const sqlite = new Database(':memory:')
+  const db = drizzle(sqlite, { schema })
+
+  // Run migrations
+  migrate(db, { migrationsFolder: 'drizzle' })
+
+  return db
+}
+
+export function seedTestData(db: ReturnType<typeof createTestDb>) {
+  return {
+    user: db.insert(schema.users).values({
+      name: 'Test User',
+      email: 'test@example.com'
+    }).returning().get(),
+
+    // Add more seed data as needed
+  }
+}
+```
+<% } %>
+
+### React Testing Utilities
+
+```typescript
+// tests/helpers/render.tsx
+import { render, RenderOptions } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+const AllProviders = ({ children }: { children: React.ReactNode }) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  })
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        {children}
+      </BrowserRouter>
+    </QueryClientProvider>
+  )
+}
+
+export const renderWithProviders = (
+  ui: React.ReactElement,
+  options?: Omit<RenderOptions, 'wrapper'>
+) => render(ui, { wrapper: AllProviders, ...options })
+```
+
+### Mock Services
+
+```typescript
+// tests/mocks/api.ts
+export const mockApiHandlers = [
+  http.get('/api/posts', () => {
+    return HttpResponse.json({
+      posts: [],
+      pagination: { page: 1, limit: 10, total: 0, pages: 0 }
+    })
+  }),
+
+  http.post('/api/posts', async ({ request }) => {
+    const body = await request.json()
+    return HttpResponse.json({
+      post: { id: '1', ...body, createdAt: new Date().toISOString() }
+    }, { status: 201 })
+  })
+]
+```
+
+---
+
+## 📚 Testing Best Practices
+
+### General Principles
+
+1. **Test Behavior, Not Implementation** — Focus on what the code does, not how
+2. **Write Descriptive Test Names** — Test names should explain the scenario
+3. **Arrange-Act-Assert Pattern** — Structure tests clearly
+4. **One Assertion Per Test** — Keep tests focused and specific
+5. **Test Edge Cases** — Include boundary conditions and error states
+
+### Component Testing Guidelines
+
+```typescript
+// ✅ Good: Tests behavior
+test('shows error message when form submission fails', async () => {
+  render(<LoginForm />)
+
+  // Arrange
+  fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'invalid' } })
+
+  // Act
+  fireEvent.click(screen.getByRole('button', { name: 'Sign In' }))
+
+  // Assert
+  await waitFor(() => {
+    expect(screen.getByText('Please enter a valid email')).toBeInTheDocument()
+  })
+})
+
+// ❌ Bad: Tests implementation details
+test('calls validateEmail function with correct parameters', () => {
+  const validateEmailSpy = vi.spyOn(utils, 'validateEmail')
+  render(<LoginForm />)
+  // ...
+  expect(validateEmailSpy).toHaveBeenCalledWith('invalid')
+})
+```
+
+### E2E Testing Guidelines
+
+```typescript
+// ✅ Good: Tests complete user journey
+test('user can create and publish a blog post', async ({ page }) => {
+  // Login
+  await page.goto('/auth')
+  await page.fill('[data-testid="email"]', 'author@example.com')
+  await page.fill('[data-testid="password"]', 'password')
+  await page.click('[data-testid="login-button"]')
+
+  // Navigate to create post
+  await page.click('[data-testid="create-post"]')
+
+  // Fill form
+  await page.fill('[data-testid="post-title"]', 'My Test Post')
+  await page.fill('[data-testid="post-content"]', 'This is test content')
+
+  // Publish
+  await page.click('[data-testid="publish-button"]')
+
+  // Verify
+  await expect(page.getByText('Post published successfully')).toBeVisible()
+  await expect(page.url()).toContain('/posts/')
+})
+```
+
+---
+
+*Last Updated: <%= new Date().toLocaleDateString() %>*
+*Generated by KareTech Stack*

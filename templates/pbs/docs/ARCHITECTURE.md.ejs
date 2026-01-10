@@ -1,0 +1,671 @@
+# Architecture Documentation — <%= projectName %>
+
+> **System design decisions and technical architecture**
+> Update this document when making structural changes to the codebase.
+
+---
+
+## 🏗️ System Overview
+
+**<%= projectName %>** follows a modern full-stack architecture with clear separation of concerns between frontend, backend, and data layers. The system is designed for scalability, maintainability, and developer experience.
+
+### High-Level Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Client Layer                         │
+│  React + TypeScript + TanStack Router + Tailwind CSS   │
+<% if (uiStyle !== 'default') { %>│              + shadcn/ui (<%= uiStyle %> theme)              │<% } %>
+└─────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────┐
+│                  API Gateway Layer                      │
+│              Hono.js + <%= apiStyle === 'orpc' ? 'oRPC' : apiStyle === 'trpc' ? 'tRPC' : 'REST' %> Endpoints              │
+└─────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────┐
+│                 Business Logic Layer                    │
+│         Services + Repositories + Validation           │
+└─────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────┐
+│                   Data Access Layer                     │
+<% if (database === 'postgresql') { %>│        PostgreSQL + Drizzle ORM + Connection Pool       │<% } %>
+<% if (database === 'turso') { %>│           Turso (LibSQL) + Drizzle ORM                  │<% } %>
+<% if (database === 'sqlite') { %>│             SQLite + Drizzle ORM                        │<% } %>
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🎯 Architectural Principles
+
+### 1. Type Safety First
+- **100% TypeScript** across frontend and backend
+- **Strict compilation** with zero `any` types
+- **Schema-driven development** with Drizzle ORM
+<% if (apiStyle === 'orpc' || apiStyle === 'trpc') { %>- **End-to-end type safety** with <%= apiStyle === 'orpc' ? 'oRPC' : 'tRPC' %><% } %>
+
+### 2. Separation of Concerns
+- **Frontend:** UI components and client-side state
+- **Backend:** Business logic and data processing
+- **Database:** Data persistence and integrity
+
+### 3. Progressive Enhancement
+- **Server-side rendering** for initial page loads
+- **Client-side routing** for navigation
+<% if (pwa) { %>- **Progressive Web App** capabilities<% } %>
+- **Responsive design** across all devices
+
+### 4. Performance Optimization
+- **Bundle splitting** and code splitting
+- **Image optimization** and lazy loading
+- **Database query optimization** with proper indexing
+- **Caching strategy** for static and dynamic content
+
+---
+
+## 🗂️ Directory Structure
+
+### Frontend Architecture (`/src`)
+
+```
+src/
+├── main.tsx                    # Application entry point
+├── index.css                   # Global styles and theme
+├── routes/                     # Page-level components
+│   ├── __root.tsx              # Root layout and providers
+│   ├── index.tsx               # Homepage component
+│   ├── about.tsx               # About page component
+<% if (auth.length > 0) { %>│   └── auth.tsx                # Authentication pages<% } %>
+├── components/                 # Reusable UI components
+│   ├── ui/                     # Base UI primitives
+│   │   ├── button.tsx          # Button component
+│   │   ├── input.tsx           # Input component
+│   │   ├── card.tsx            # Card component
+│   │   └── ...                 # Other UI primitives
+│   └── layout/                 # Layout components
+│       ├── header.tsx          # Site header
+│       ├── footer.tsx          # Site footer
+│       └── navigation.tsx      # Navigation menu
+├── lib/                        # Utilities and configurations
+│   ├── utils.ts                # Common utility functions
+<% if (apiStyle === 'orpc' || apiStyle === 'trpc') { %>│   ├── api.ts                  # API client configuration<% } %>
+│   └── auth.ts                 # Authentication utilities
+<% if (database !== 'none') { %>├── db/                         # Database layer
+│   ├── index.ts                # Database connection
+│   ├── schema.ts               # Database schema definitions
+│   ├── queries.ts              # Database queries
+│   └── migrations/             # Database migrations<% } %>
+<% if (auth.length > 0) { %>├── auth/                       # Authentication
+│   └── config.ts               # Auth configuration<% } %>
+└── server/                     # Backend server
+    ├── index.ts                # Hono.js server entry
+<% if (apiStyle === 'orpc') { %>    └── api/                    # oRPC API routes<% } %>
+<% if (apiStyle === 'trpc') { %>    └── trpc/                   # tRPC procedures<% } %>
+<% if (apiStyle === 'rest') { %>    └── routes/                 # REST API routes<% } %>
+```
+
+<% if (testing.length > 0) { %>### Testing Architecture (`/tests`)
+
+```
+tests/
+<% if (testing.includes('playwright')) { %>├── e2e/                        # End-to-end tests
+│   ├── homepage.spec.ts        # Homepage functionality
+│   ├── navigation.spec.ts      # Site navigation
+<% if (auth.length > 0) { %>│   └── auth.spec.ts            # Authentication flows<% } %><% } %>
+<% if (unitTesting) { %>├── unit/                       # Unit tests
+│   ├── components/             # Component tests
+│   ├── utils/                  # Utility function tests
+│   └── api/                    # API endpoint tests<% } %>
+<% if (testing.includes('puppeteer')) { %>└── automation/                # Automation tests
+    ├── performance.spec.js     # Performance testing
+    └── accessibility.spec.js   # Accessibility testing<% } %>
+```
+<% } %>
+
+---
+
+## 🔧 Technology Stack
+
+### Frontend Stack
+
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| **Framework** | React 18+ | UI component library |
+| **Language** | TypeScript | Type-safe development |
+| **Build Tool** | Vite | Fast development and builds |
+| **Routing** | TanStack Router | Type-safe client-side routing |
+| **State Management** | TanStack Query | Server state management |
+| **Styling** | Tailwind CSS | Utility-first CSS framework |
+<% if (uiStyle !== 'default') { %>| **UI Components** | shadcn/ui | Accessible component system |<% } %>
+<% if (pwa) { %>| **PWA** | Workbox | Progressive Web App features |<% } %>
+
+### Backend Stack
+
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| **Framework** | Hono.js | Lightweight web framework |
+| **Runtime** | Bun | Fast JavaScript runtime |
+<% if (apiStyle === 'orpc') { %>| **API Layer** | oRPC | Type-safe RPC framework |<% } %>
+<% if (apiStyle === 'trpc') { %>| **API Layer** | tRPC | Type-safe procedure calls |<% } %>
+<% if (apiStyle === 'rest') { %>| **API Layer** | REST | RESTful HTTP endpoints |<% } %>
+<% if (auth.length > 0) { %>| **Authentication** | Better Auth | Multi-provider authentication |<% } %>
+
+### Data Stack
+
+<% if (database !== 'none') { %>| Layer | Technology | Purpose |
+|-------|------------|---------|
+<% if (database === 'postgresql') { %>| **Database** | PostgreSQL | Relational database |<% } %>
+<% if (database === 'turso') { %>| **Database** | Turso (LibSQL) | Edge-distributed SQLite |<% } %>
+<% if (database === 'sqlite') { %>| **Database** | SQLite | Local file-based database |<% } %>
+| **ORM** | Drizzle | Type-safe database queries |
+| **Migration** | Drizzle Kit | Schema migrations |
+| **Validation** | Zod | Runtime type validation |
+<% } %>
+
+<% if (testing.length > 0) { %>### Testing Stack
+
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+<% if (testing.includes('playwright')) { %>| **E2E Testing** | Playwright | Cross-browser end-to-end tests |<% } %>
+<% if (unitTesting) { %>| **Unit Testing** | Vitest | Fast unit and integration tests |<% } %>
+<% if (testing.includes('puppeteer')) { %>| **Automation** | Puppeteer | Browser automation and testing |<% } %>
+| **Test Utils** | Testing Library | Component testing utilities |
+<% } %>
+
+### DevOps Stack
+
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| **Containerization** | Docker | Application containerization |
+| **CI/CD** | GitHub Actions | Continuous integration/deployment |
+| **Package Manager** | Bun | Fast package management |
+| **Type Checking** | TypeScript | Static type analysis |
+| **Linting** | ESLint | Code quality enforcement |
+| **Formatting** | Prettier | Code style consistency |
+
+---
+
+## 📊 Data Architecture
+
+<% if (database !== 'none') { %>### Database Schema Design
+
+#### Core Entities
+
+```typescript
+// User management
+users
+├── id (UUID, Primary Key)
+├── name (Text, Not Null)
+├── email (Text, Unique, Not Null)
+├── emailVerified (Boolean)
+├── image (Text, Optional)
+├── createdAt (Timestamp)
+└── updatedAt (Timestamp)
+
+<% if (auth.length > 0) { %>// Authentication
+accounts
+├── id (UUID, Primary Key)
+├── userId (UUID, Foreign Key -> users.id)
+├── type (Text) // oauth, email
+├── provider (Text) // github, google, etc.
+├── providerAccountId (Text)
+├── refreshToken (Text, Optional)
+├── accessToken (Text, Optional)
+├── expiresAt (Integer, Optional)
+└── tokenType (Text, Optional)
+
+sessions
+├── sessionToken (Text, Primary Key)
+├── userId (UUID, Foreign Key -> users.id)
+├── expires (Timestamp)
+└── createdAt (Timestamp)
+
+verificationTokens
+├── identifier (Text)
+├── token (Text)
+├── expires (Timestamp)
+└── PRIMARY KEY (identifier, token)
+<% } %>
+
+// Application data
+posts (example entity)
+├── id (UUID, Primary Key)
+├── title (Text, Not Null)
+├── content (Text)
+├── authorId (UUID, Foreign Key -> users.id)
+├── published (Boolean, Default: false)
+├── createdAt (Timestamp)
+└── updatedAt (Timestamp)
+```
+
+### Data Access Patterns
+
+#### Repository Pattern
+```typescript
+// Generic repository interface
+interface Repository<T> {
+  findById(id: string): Promise<T | null>
+  create(data: CreateInput<T>): Promise<T>
+  update(id: string, data: UpdateInput<T>): Promise<T>
+  delete(id: string): Promise<void>
+  findMany(filters?: FilterInput<T>): Promise<T[]>
+}
+
+// Example implementation
+export class PostRepository implements Repository<Post> {
+  async findById(id: string) {
+    return await db.select().from(posts).where(eq(posts.id, id))
+  }
+  // ... other methods
+}
+```
+
+#### Query Optimization
+- **Proper indexing** on frequently queried columns
+- **Connection pooling** for database connections
+- **Query result caching** for expensive operations
+- **Pagination** for large result sets
+
+<% } %>---
+
+## 🔗 API Architecture
+
+<% if (apiStyle === 'orpc') { %>### oRPC Implementation
+
+#### Procedure Definition
+```typescript
+// src/server/api/posts.ts
+import { z } from 'zod'
+import { procedure, router } from './trpc'
+
+const createPostSchema = z.object({
+  title: z.string().min(1).max(100),
+  content: z.string().min(1),
+  published: z.boolean().default(false)
+})
+
+export const postsRouter = router({
+  create: procedure
+    .input(createPostSchema)
+    .mutation(async ({ input, ctx }) => {
+      return await ctx.db.posts.create(input)
+    }),
+
+  getById: procedure
+    .input(z.string())
+    .query(async ({ input, ctx }) => {
+      return await ctx.db.posts.findById(input)
+    }),
+})
+```
+
+#### Type-Safe Client Usage
+```typescript
+// Frontend usage
+import { api } from '@/lib/api'
+
+// Type-safe API calls
+const post = await api.posts.getById.query('post-id')
+const newPost = await api.posts.create.mutate({
+  title: 'My Post',
+  content: 'Post content',
+  published: true
+})
+```
+<% } %>
+
+<% if (apiStyle === 'trpc') { %>### tRPC Implementation
+
+#### Router Definition
+```typescript
+// src/server/trpc/routers/posts.ts
+import { z } from 'zod'
+import { publicProcedure, router } from '../trpc'
+
+export const postsRouter = router({
+  getAll: publicProcedure.query(async ({ ctx }) => {
+    return await ctx.db.posts.findMany()
+  }),
+
+  create: publicProcedure
+    .input(z.object({
+      title: z.string(),
+      content: z.string(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      return await ctx.db.posts.create(input)
+    }),
+})
+```
+
+#### Client Integration
+```typescript
+// Frontend setup
+import { createTRPCReact } from '@trpc/react-query'
+import type { AppRouter } from '@/server/trpc'
+
+export const trpc = createTRPCReact<AppRouter>()
+
+// Usage in components
+function PostsList() {
+  const { data: posts } = trpc.posts.getAll.useQuery()
+  const createPost = trpc.posts.create.useMutation()
+
+  return (
+    // Component JSX
+  )
+}
+```
+<% } %>
+
+<% if (apiStyle === 'rest') { %>### REST API Implementation
+
+#### Route Structure
+```
+/api/
+├── /auth              # Authentication endpoints
+│   ├── POST /login    # User login
+│   ├── POST /logout   # User logout
+│   └── GET /me        # Current user
+├── /posts             # Post management
+│   ├── GET /          # List posts
+│   ├── POST /         # Create post
+│   ├── GET /:id       # Get specific post
+│   ├── PUT /:id       # Update post
+│   └── DELETE /:id    # Delete post
+└── /users             # User management
+    ├── GET /          # List users
+    ├── GET /:id       # Get user profile
+    └── PUT /:id       # Update user
+```
+
+#### Route Implementation
+```typescript
+// src/server/routes/posts.ts
+import { Hono } from 'hono'
+import { zValidator } from '@hono/zod-validator'
+import { z } from 'zod'
+
+const app = new Hono()
+
+app.get('/', async (c) => {
+  const posts = await db.posts.findMany()
+  return c.json(posts)
+})
+
+app.post('/',
+  zValidator('json', z.object({
+    title: z.string(),
+    content: z.string(),
+  })),
+  async (c) => {
+    const data = c.req.valid('json')
+    const post = await db.posts.create(data)
+    return c.json(post, 201)
+  }
+)
+
+export default app
+```
+<% } %>
+
+---
+
+## 🔐 Security Architecture
+
+<% if (auth.length > 0) { %>### Authentication Strategy
+
+**Better Auth Configuration:**
+- **Session-based authentication** with secure cookies
+- **Multi-provider OAuth** support
+<% auth.forEach(provider => { if (['github', 'google', 'discord', 'microsoft'].includes(provider)) { %>- **<%= provider.charAt(0).toUpperCase() + provider.slice(1) %> OAuth** integration<% }}) %>
+<% if (auth.includes('email')) { %>- **Email/password** authentication with secure hashing<% } %>
+- **CSRF protection** for all state-changing operations
+- **Session rotation** on privilege escalation
+
+#### Authentication Flow
+```typescript
+// Authentication middleware
+export const authMiddleware = async (c: Context, next: Next) => {
+  const session = await getSession(c)
+  if (!session) {
+    return c.json({ error: 'Unauthorized' }, 401)
+  }
+  c.set('user', session.user)
+  await next()
+}
+
+// Protected route usage
+app.get('/api/protected', authMiddleware, async (c) => {
+  const user = c.get('user')
+  return c.json({ message: `Hello ${user.name}` })
+})
+```
+<% } %>
+
+### Data Security
+
+#### Input Validation
+- **Zod schemas** for all API inputs
+- **SQL injection protection** via Drizzle ORM
+- **XSS protection** with content sanitization
+- **CORS configuration** for cross-origin requests
+
+#### Environment Security
+```bash
+# Required environment variables
+NODE_ENV=production
+<% if (database === 'postgresql') { %>DATABASE_URL=postgresql://user:pass@host:port/db<% } %>
+<% if (database === 'turso') { %>DATABASE_URL=libsql://database-url.turso.io
+DATABASE_AUTH_TOKEN=secret-token<% } %>
+<% if (auth.length > 0) { %>BETTER_AUTH_SECRET=random-secret-key
+BETTER_AUTH_URL=https://your-domain.com<% } %>
+```
+
+---
+
+## 🚀 Performance Architecture
+
+### Frontend Optimization
+
+#### Code Splitting Strategy
+```typescript
+// Route-based code splitting
+import { lazy } from 'react'
+
+const HomePage = lazy(() => import('@/routes/home'))
+const AboutPage = lazy(() => import('@/routes/about'))
+<% if (auth.length > 0) { %>const AuthPage = lazy(() => import('@/routes/auth'))<% } %>
+
+// Component-level splitting for large features
+const Dashboard = lazy(() => import('@/components/dashboard'))
+```
+
+#### Bundle Optimization
+- **Tree shaking** to eliminate dead code
+- **Asset optimization** with Vite build tools
+- **Image optimization** with modern formats
+- **Font optimization** with variable fonts
+
+### Backend Optimization
+
+<% if (database !== 'none') { %>#### Database Performance
+```typescript
+// Optimized queries with indexes
+export const findPostsByAuthor = async (authorId: string) => {
+  return await db.select({
+    id: posts.id,
+    title: posts.title,
+    createdAt: posts.createdAt
+  })
+  .from(posts)
+  .where(eq(posts.authorId, authorId))
+  .orderBy(desc(posts.createdAt))
+  .limit(20)
+}
+
+// Connection pooling
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  max: 20, // Maximum pool size
+  min: 2,  // Minimum pool size
+})
+```
+<% } %>
+
+#### Caching Strategy
+- **Response caching** for static content
+- **Database query caching** for expensive operations
+- **CDN integration** for asset delivery
+
+---
+
+## 📊 Monitoring & Observability
+
+<% if (errorTracking !== 'none') { %>### Error Tracking
+
+**<%= errorTracking === 'sentry' ? 'Sentry' : 'Bugsnag' %> Integration:**
+```typescript
+<% if (errorTracking === 'sentry') { %>import * as Sentry from '@sentry/react'
+
+Sentry.init({
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  environment: import.meta.env.MODE,
+  tracesSampleRate: 1.0,
+})<% } %>
+<% if (errorTracking === 'bugsnag') { %>import Bugsnag from '@bugsnag/js'
+
+Bugsnag.start({
+  apiKey: import.meta.env.VITE_BUGSNAG_API_KEY,
+  appVersion: '1.0.0',
+  releaseStage: import.meta.env.MODE
+})<% } %>
+```
+<% } %>
+
+<% if (analytics !== 'none') { %>### Analytics
+
+**<%= analytics === 'google' ? 'Google Analytics' : analytics === 'posthog' ? 'PostHog' : 'Vercel Analytics' %> Setup:**
+```typescript
+<% if (analytics === 'posthog') { %>import posthog from 'posthog-js'
+
+posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
+  api_host: import.meta.env.VITE_POSTHOG_HOST
+})<% } %>
+<% if (analytics === 'google') { %>import { gtag } from 'ga-gtag'
+
+gtag('config', import.meta.env.VITE_GA_ID, {
+  page_title: document.title,
+  page_location: window.location.href
+})<% } %>
+```
+<% } %>
+
+### Performance Monitoring
+- **Core Web Vitals** tracking
+- **API response time** monitoring
+- **Database query performance** analysis
+- **Error rate** tracking and alerting
+
+---
+
+## 🔄 Development Workflow
+
+### Local Development
+```bash
+# Start development server
+bun dev                 # Frontend + backend in development mode
+
+<% if (database !== 'none') { %># Database operations
+bun db:generate         # Generate migrations from schema changes
+bun db:migrate          # Apply pending migrations
+bun db:studio          # Open Drizzle Studio for database management
+<% } %>
+
+# Code quality
+bun typecheck          # TypeScript type checking
+bun lint               # ESLint code linting
+bun format             # Prettier code formatting
+
+<% if (testing.length > 0) { %># Testing
+<% if (testing.includes('playwright')) { %>bun test:e2e           # Playwright end-to-end tests<% } %>
+<% if (unitTesting) { %>bun test:unit          # Vitest unit tests<% } %>
+<% if (testing.includes('puppeteer')) { %>bun test:automation    # Puppeteer automation tests<% } %>
+<% } %>
+```
+
+### Production Deployment
+<% if (docker) { %>```bash
+# Docker deployment
+docker build -t <%= projectName.toLowerCase().replace(/\s+/g, '-') %> .
+docker run -p 3000:3000 --env-file .env <%= projectName.toLowerCase().replace(/\s+/g, '-') %>
+
+# With Docker Compose
+docker-compose up -d
+```
+<% } %>
+
+### CI/CD Pipeline
+1. **Code Push** → GitHub repository
+2. **Automated Testing** → All test suites run
+3. **Type Checking** → TypeScript compilation
+4. **Build Process** → Optimized production build
+5. **Security Scan** → Dependency vulnerability check
+6. **Deployment** → Automatic deployment on success
+
+---
+
+## 📋 Decision Records
+
+### ADR-001: Database Choice
+**Decision:** <% if (database === 'postgresql') { %>PostgreSQL with connection pooling<% } %><% if (database === 'turso') { %>Turso (LibSQL) for edge distribution<% } %><% if (database === 'sqlite') { %>SQLite for local development simplicity<% } %>
+
+**Context:** Need reliable data persistence with type safety
+
+**Consequences:**
+- ✅ Strong consistency guarantees
+- ✅ Rich query capabilities
+- ✅ Excellent TypeScript integration with Drizzle
+<% if (database === 'turso') { %>- ✅ Global edge distribution<% } %>
+
+### ADR-002: Authentication Strategy
+<% if (auth.length > 0) { %>**Decision:** Better Auth with multi-provider support
+
+**Context:** Need secure, flexible authentication
+
+**Consequences:**
+- ✅ Multiple OAuth providers supported
+<% if (auth.includes('email')) { %>- ✅ Email/password authentication<% } %>
+- ✅ Session-based security
+- ✅ CSRF protection built-in
+<% } else { %>**Decision:** No authentication system initially
+
+**Context:** Simplify initial development
+
+**Consequences:**
+- ✅ Faster initial development
+- ⚠️ Authentication can be added later
+<% } %>
+
+### ADR-003: API Design
+**Decision:** <%= apiStyle === 'orpc' ? 'oRPC for type-safe RPC' : apiStyle === 'trpc' ? 'tRPC for type-safe procedures' : 'REST API with OpenAPI documentation' %>
+
+**Context:** Need reliable client-server communication
+
+**Consequences:**
+<% if (apiStyle === 'orpc' || apiStyle === 'trpc') { %>- ✅ End-to-end type safety
+- ✅ Automatic client code generation
+- ✅ Excellent developer experience<% } else { %>- ✅ Standard HTTP semantics
+- ✅ Easy to understand and debug
+- ✅ Wide tooling support<% } %>
+
+---
+
+*Last Updated: <%= new Date().toLocaleDateString() %>*
+*Generated by KareTech Stack*

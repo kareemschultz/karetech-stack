@@ -1,0 +1,234 @@
+# Project Constitution — <%= projectName %>
+
+> **IMMUTABLE DOCUMENT** — These principles cannot be changed or overridden
+> **Created:** <%= new Date().toLocaleDateString() %>
+> **Author:** <%= author %>
+
+---
+
+## 🔒 CONSTITUTIONAL PRINCIPLES
+
+This document establishes the immutable principles that govern all development decisions for **<%= projectName %>**. These principles take precedence over all other considerations and cannot be modified under any circumstances.
+
+---
+
+## 1. TYPE SAFETY FIRST
+
+### 1.1 TypeScript Mandatory
+- **100% TypeScript** implementation across the entire codebase
+- **Zero `any` types** permitted in production code
+- **Strict TypeScript mode** enabled and enforced
+- All external dependencies must have proper type definitions
+
+### 1.2 Type Safety Enforcement
+- All functions must have explicit return types
+- All API interfaces must be fully typed
+- Database schema must be type-safe with Drizzle ORM
+- No type assertions (`as`) without explicit justification
+
+### 1.3 Build-Time Safety
+- TypeScript compilation must pass with zero errors
+- No TypeScript warnings in production builds
+- Type checking integrated into CI/CD pipeline
+
+---
+
+## 2. SECURITY & PRIVACY
+
+### 2.1 Security-First Architecture
+- **All user inputs validated** and sanitized
+- **Environment variables** for all sensitive data
+- **No secrets in source code** or configuration files
+- **HTTPS everywhere** in production
+
+### 2.2 Authentication & Authorization
+- **Strong authentication** for all protected resources
+<% if (auth.length > 0) { %>- OAuth providers properly configured with secure callbacks
+- Session management with secure, HttpOnly cookies
+- Proper CSRF protection implemented<% } %>
+
+### 2.3 Data Protection
+<% if (database !== 'none') { %>- Database connections encrypted in production
+- User data encrypted at rest where appropriate
+- Data retention policies clearly defined<% } %>
+
+---
+
+## 3. PERFORMANCE & RELIABILITY
+
+### 3.1 Core Web Vitals Compliance
+- **Largest Contentful Paint (LCP)** < 2.5s
+- **First Input Delay (FID)** < 100ms
+- **Cumulative Layout Shift (CLS)** < 0.1
+
+### 3.2 Application Performance
+- Bundle size optimization mandatory
+- Lazy loading for all non-critical resources
+- Image optimization and modern formats
+- Efficient state management patterns
+
+### 3.3 Reliability Standards
+<% if (testing.length > 0) { %>- **Minimum 80% test coverage** for critical paths
+- All tests must pass before deployment
+- <% if (testing.includes('playwright')) { %>E2E tests cover core user journeys<% } %>
+- <% if (unitTesting) { %>Unit tests for all utility functions<% } %><% } %>
+
+---
+
+## 4. DEVELOPER EXPERIENCE
+
+### 4.1 Code Quality Standards
+- **ESLint** and **Prettier** configurations enforced
+- **Consistent code style** across all files
+- **Meaningful variable and function names**
+- **Self-documenting code** preferred over comments
+
+### 4.2 Development Workflow
+- **Feature branches** for all development work
+- **Pull request reviews** required for main branch
+- **Conventional commits** for clear history
+<% if (docker) { %>- **Docker development environment** for consistency<% } %>
+
+### 4.3 Documentation Requirements
+- **README.md** kept up-to-date with setup instructions
+- **API documentation** for all endpoints
+- **Architecture decisions** documented in ADR format
+
+---
+
+## 5. MAINTAINABILITY
+
+### 5.1 Code Organization
+- **Clear separation of concerns** between layers
+- **Modular architecture** with defined boundaries
+- **Dependency injection** for testable code
+- **Single Responsibility Principle** enforced
+
+### 5.2 Technical Debt Management
+- **No quick hacks** or temporary solutions without issues
+- **Regular refactoring** scheduled and prioritized
+- **Dependency updates** managed systematically
+- **Code review** catches technical debt early
+
+### 5.3 Monitoring & Observability
+<% if (errorTracking !== 'none') { %>- **Error tracking** implemented in production
+- Performance monitoring for critical paths<% } %>
+<% if (analytics !== 'none') { %>- **User analytics** for product decisions<% } %>
+- **Health checks** for all critical services
+
+---
+
+## 6. TECHNOLOGY CONSTRAINTS
+
+### 6.1 Core Technology Stack
+- **Frontend:** React + TypeScript + Vite (immutable)
+- **Backend:** Hono.js (immutable)
+<% if (database !== 'none') { %>- **Database:** <%= database === 'postgresql' ? 'PostgreSQL' : database === 'turso' ? 'Turso (LibSQL)' : 'SQLite' %> + Drizzle ORM (immutable)<% } %>
+<% if (auth.length > 0) { %>- **Authentication:** Better Auth (immutable)<% } %>
+
+### 6.2 Approved Dependencies Only
+- New dependencies require architectural review
+- Security audit required for all dependencies
+- License compatibility verified for all packages
+- Bundle size impact assessed for frontend dependencies
+
+### 6.3 Version Management
+- **Node.js LTS** versions only
+- **Bun latest stable** for package management and runtime
+- **Regular updates** following semantic versioning
+- **Breaking changes** require major version bump
+
+---
+
+## 7. DEPLOYMENT & OPERATIONS
+
+### 7.1 Environment Management
+- **Environment parity** between development and production
+- **Configuration as code** for all infrastructure
+<% if (docker) { %>- **Containerized deployments** for consistency<% } %>
+- **Blue-green deployments** for zero downtime
+
+### 7.2 CI/CD Requirements
+- **Automated testing** on every commit
+- **Automated deployment** on successful tests
+- **Rollback capability** within 5 minutes
+- **Deployment notifications** to relevant teams
+
+### 7.3 Production Standards
+- **Health checks** for all services
+- **Graceful shutdown** handling
+- **Resource limits** properly configured
+- **Logging** structured and searchable
+
+---
+
+## 8. BUSINESS ALIGNMENT
+
+### 8.1 User-Centric Development
+- **User experience** prioritized over developer convenience
+- **Accessibility** (WCAG 2.1 AA) compliance mandatory
+- **Progressive enhancement** for broader device support
+<% if (pwa) { %>- **Offline functionality** where applicable<% } %>
+
+### 8.2 Scalability Planning
+- **Database indexing** strategy defined
+- **Caching strategy** implemented
+- **Rate limiting** for API endpoints
+- **Horizontal scaling** architecture preferred
+
+---
+
+## 9. ENFORCEMENT MECHANISMS
+
+### 9.1 Automated Enforcement
+- **Pre-commit hooks** prevent non-compliant code
+- **CI/CD pipeline** blocks non-compliant deployments
+- **Static analysis** tools integrated into workflow
+- **Dependency scanning** for security vulnerabilities
+
+### 9.2 Review Process
+- **Constitutional compliance** checked in all pull requests
+- **Architecture reviews** for significant changes
+- **Security reviews** for authentication/authorization changes
+- **Performance reviews** for user-facing features
+
+---
+
+## 10. CONSTITUTIONAL VIOLATIONS
+
+### 10.1 Zero Tolerance Policy
+- Constitutional violations **block all deployments**
+- No exceptions for deadlines or business pressure
+- **Immediate rollback** if violations reach production
+- **Post-mortem required** for any constitutional violations
+
+### 10.2 Amendment Impossibility
+- This constitution **cannot be modified**
+- No override mechanisms or escape hatches
+- **New projects** may adopt different constitutions
+- **Fork projects** inherit this constitution
+
+---
+
+## ✅ CONSTITUTIONAL COMPLIANCE CHECKLIST
+
+Before any deployment, verify:
+
+- [ ] 100% TypeScript with zero `any` types
+- [ ] All tests passing with >80% coverage
+- [ ] Security review completed
+- [ ] Performance benchmarks met
+- [ ] Code review approved
+- [ ] Documentation updated
+- [ ] Environment variables secured
+- [ ] Error handling implemented
+- [ ] Monitoring configured
+- [ ] Accessibility tested
+
+---
+
+**REMEMBER: This constitution is IMMUTABLE and takes precedence over all other project decisions.**
+
+*Constitutional Authority: <%= author %>*
+*Established: <%= new Date().toLocaleDateString() %>*
+*Generated by KareTech Stack*

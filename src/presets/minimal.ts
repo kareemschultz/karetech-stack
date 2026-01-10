@@ -16,12 +16,14 @@ export const minimalPreset: PresetConfig = {
   apiStyle: 'orpc',
 
   // Design
-  uiStyle: 'default',
-  baseColor: 'slate',
+  componentLibrary: 'base-ui',
+  uiStyle: 'maia',
+  baseColor: 'zinc',
   accentColor: 'blue',
-  font: 'inter',
-  icons: 'lucide',
-  borderRadius: '0.5',
+  font: 'figtree',
+  icons: 'hugeicons',
+  borderRadius: 'default',
+  menuAccent: 'subtle',
 
   // Testing
   testing: [],

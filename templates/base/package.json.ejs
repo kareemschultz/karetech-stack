@@ -1,0 +1,97 @@
+{
+  "name": "<%= projectName %>",
+  "version": "0.1.0",
+  "description": "<%= description %>",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "node dist/server.js",<% if (testing.includes('playwright')) { %>
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",<% } %><% if (testing.includes('puppeteer')) { %>
+    "test:e2e": "puppeteer test",<% } %><% if (unitTesting || testing.includes('vitest')) { %>
+    "test:unit": "vitest",<% } %><% if (testing.length > 0 || unitTesting) { %>
+    "test:all": "<%- testing.includes('playwright') ? 'playwright test && ' : '' %><%- testing.includes('puppeteer') ? 'puppeteer test && ' : '' %><%- unitTesting ? 'vitest run' : '' %>",<% } %>
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "format": "prettier --write ."<% if (docker) { %>,
+    "docker:build": "docker build -t <%= projectName %> .",
+    "docker:run": "docker run -p 3000:3000 <%= projectName %>"<% } %>
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.12.0",
+    "@tanstack/react-router": "^1.57.15",
+    "hono": "^4.6.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",<% if (database === 'postgresql') { %>
+    "drizzle-orm": "^0.33.0",
+    "postgres": "^3.4.4",<% } %><% if (database === 'turso') { %>
+    "drizzle-orm": "^0.33.0",
+    "@libsql/client": "^0.10.0",<% } %><% if (database === 'sqlite') { %>
+    "drizzle-orm": "^0.33.0",
+    "better-sqlite3": "^11.3.0",<% } %><% if (apiStyle === 'orpc') { %>
+    "@orpc/server": "^0.0.3",
+    "@orpc/client": "^0.0.3",
+    "@orpc/react-query": "^0.0.3",<% } %><% if (apiStyle === 'trpc') { %>
+    "@trpc/server": "^11.0.0",
+    "@trpc/client": "^11.0.0",
+    "@trpc/react-query": "^11.0.0",<% } %>
+    "@tanstack/react-query": "^5.56.2",<% if (auth.includes('email') || auth.includes('github') || auth.includes('google') || auth.includes('discord') || auth.includes('microsoft')) { %>
+    "better-auth": "^1.0.1",
+    "@better-auth/drizzle": "^1.0.1",<% } %><% if (auth.includes('github')) { %>
+    "arctic": "^1.9.2",<% } %><% if (auth.includes('google')) { %>
+    "google-auth-library": "^9.14.1",<% } %>
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.2",
+    "class-variance-authority": "^0.7.0",<% if (uiStyle !== 'default') { %>
+    "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-icons": "^1.3.0",<% } %><% if (icons === 'lucide') { %>
+    "lucide-react": "^0.447.0",<% } %><% if (icons === 'heroicons') { %>
+    "@heroicons/react": "^2.1.5",<% } %><% if (icons === 'hugeicons') { %>
+    "hugeicons-react": "^0.3.0",<% } %><% if (icons === 'tabler') { %>
+    "@tabler/icons-react": "^3.19.0",<% } %><% if (pwa) { %>
+    "vite-plugin-pwa": "^0.20.5",<% } %><% if (analytics === 'vercel') { %>
+    "@vercel/analytics": "^1.3.1",<% } %><% if (analytics === 'google') { %>
+    "gtag": "^1.0.1",<% } %><% if (analytics === 'posthog') { %>
+    "posthog-js": "^1.165.0",<% } %><% if (errorTracking === 'sentry') { %>
+    "@sentry/react": "^8.34.0",
+    "@sentry/vite-plugin": "^2.22.4",<% } %><% if (errorTracking === 'bugsnag') { %>
+    "@bugsnag/js": "^7.25.0",
+    "@bugsnag/plugin-react": "^7.25.0",<% } %><% if (email === 'resend') { %>
+    "resend": "^4.0.0",<% } %><% if (email === 'sendgrid') { %>
+    "@sendgrid/mail": "^8.1.3",<% } %><% if (featureFlags) { %>
+    "@vercel/flags": "^2.6.0",<% } %>
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",<% if (database === 'postgresql') { %>
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "^0.24.2",<% } %><% if (database === 'turso') { %>
+    "drizzle-kit": "^0.24.2",<% } %><% if (database === 'sqlite') { %>
+    "@types/better-sqlite3": "^7.6.11",
+    "drizzle-kit": "^0.24.2",<% } %><% if (testing.includes('playwright')) { %>
+    "@playwright/test": "^1.47.2",<% } %><% if (testing.includes('puppeteer')) { %>
+    "puppeteer": "^23.5.0",<% } %><% if (unitTesting || testing.includes('vitest')) { %>
+    "vitest": "^2.1.1",
+    "@vitest/ui": "^2.1.1",<% } %>
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.6",
+    "postcss": "^8.4.38",
+    "prettier": "^3.2.5",
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "packageManager": "bun@1.1.0"
+}
