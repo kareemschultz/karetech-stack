@@ -12,79 +12,34 @@ import { existsSync } from 'fs';
 import { resolve } from 'path';
 import { execSync } from 'child_process';
 
+// Import our enhanced systems
+import { ProjectConfig, CliOptions, DatabaseType, AuthProvider, UiStyle, TestingFramework, CiCdPlatform, PbsLevel } from './types';
+import { validateProjectName, validateDescription, validateAuthor, validateFullConfig, getValidationContext } from './validation';
+import { exportConfig, importConfig, getDefaultConfigPath, validateConfig as validateConfigData } from './config';
+import { runEnvironmentCheck, printEnvironmentReport } from './utils/environment';
+
 const VERSION = '0.0.1';
 
-// Reserved project names that should not be used
-const RESERVED_NAMES = [
-  'node_modules', 'dist', 'build', '.git', '.next', '.nuxt', '.vite',
-  'public', 'src', 'lib', 'app', 'pages', 'components', 'utils', 'types',
-  'config', 'server', 'client', 'api', 'test', 'tests', '__tests__',
-  'docs', 'doc', 'documentation', 'readme', 'license', 'changelog',
-  'package', 'yarn', 'npm', 'pnpm', 'bun', 'node', 'deno',
-  'react', 'next', 'vue', 'svelte', 'angular', 'typescript', 'javascript',
-  'con', 'prn', 'aux', 'nul', // Windows reserved names
-  'com1', 'com2', 'com3', 'com4', 'com5', 'com6', 'com7', 'com8', 'com9',
-  'lpt1', 'lpt2', 'lpt3', 'lpt4', 'lpt5', 'lpt6', 'lpt7', 'lpt8', 'lpt9'
-];
-
-// Validation functions
-function validateProjectName(value: string): string | void {
-  if (!value) return 'Project name is required';
-  if (value.length < 2) return 'Project name must be at least 2 characters';
-  if (value.length > 50) return 'Project name must be less than 50 characters';
-  if (!/^[a-z0-9-]+$/.test(value)) return 'Use lowercase letters, numbers, and hyphens only';
-  if (value.startsWith('-') || value.endsWith('-')) return 'Project name cannot start or end with a hyphen';
-  if (value.includes('--')) return 'Project name cannot contain consecutive hyphens';
-  if (RESERVED_NAMES.includes(value.toLowerCase())) return `"${value}" is a reserved name, please choose another`;
-
-  // Check if directory already exists
-  const projectPath = resolve(process.cwd(), value);
-  if (existsSync(projectPath)) return `Directory "${value}" already exists in current location`;
+// Enhanced validation functions (using our validation system)
+function validateProjectNamePrompt(value: string): string | void {
+  const errors = validateProjectName(value);
+  const criticalError = errors.find(e => e.severity === 'error');
+  return criticalError ? criticalError.message : undefined;
 }
 
-function validateDescription(value: string): string | void {
-  if (!value) return 'Project description is required';
-  if (value.length < 3) return 'Description must be at least 3 characters';
-  if (value.length > 200) return 'Description must be less than 200 characters';
+function validateDescriptionPrompt(value: string): string | void {
+  const errors = validateDescription(value);
+  const criticalError = errors.find(e => e.severity === 'error');
+  return criticalError ? criticalError.message : undefined;
 }
 
-function validateAuthor(value: string): string | void {
-  if (!value) return 'Author name is required';
-  if (value.length < 2) return 'Author name must be at least 2 characters';
-  if (value.length > 50) return 'Author name must be less than 50 characters';
+function validateAuthorPrompt(value: string): string | void {
+  const errors = validateAuthor(value);
+  const criticalError = errors.find(e => e.severity === 'error');
+  return criticalError ? criticalError.message : undefined;
 }
 
-// Configuration interfaces
-interface ProjectConfig {
-  projectName: string;
-  description: string;
-  author: string;
-  preset?: string;
-  database: string;
-  auth: string[];
-  apiStyle: string;
-  uiStyle: string;
-  baseColor: string;
-  accentColor: string;
-  font: string;
-  icons: string;
-  borderRadius: string;
-  testing: string[];
-  unitTesting: boolean;
-  exampleTests: boolean;
-  docker: boolean;
-  cicd: string;
-  deployTarget: string;
-  pbsLevel: string;
-  beadsIntegration: boolean;
-  claudeCodeHooks: boolean;
-  mcpServers: string[];
-  pwa: boolean;
-  analytics: string;
-  email: string;
-  errorTracking: string;
-  featureFlags: boolean;
-}
+// Configuration interfaces are now imported from ./types
 
 // Preset configurations
 const presets = {
@@ -256,18 +211,45 @@ const presets = {
 const program = new Command()
   .name('create-karetech-stack')
   .description('Enhanced Better-T-Stack scaffold with PBS, testing, and DevOps')
-  .version(VERSION)
-  .argument('[project-name]', 'Name of the project')
+  .version(VERSION);
+
+// Main command for creating projects
+program
+  .command('create [project-name]', { isDefault: true })
+  .description('Create a new project')
   .option('--preset <preset>', 'Use a preset (saas, ecommerce, blog, devtool, portfolio, minimal)')
   .option('--theme <style>', 'Theme style (vega, nova, maia, lyra, mira)')
   .option('--color <color>', 'Accent color')
+  .option('--config <path>', 'Load configuration from file')
   .option('--no-git', 'Skip git initialization')
   .option('--no-install', 'Skip dependency installation')
-  .parse();
+  .action(async (projectName, options) => {
+    await createProject(projectName, options);
+  });
 
-async function main() {
-  const options = program.opts();
-  const args = program.args;
+// Environment check command
+program
+  .command('check-env')
+  .description('Check development environment setup')
+  .action(() => {
+    const report = runEnvironmentCheck();
+    printEnvironmentReport(report);
+    process.exit(report.overall === 'fail' ? 1 : 0);
+  });
+
+// Config export command
+program
+  .command('export-config <project-name>')
+  .description('Export current configuration to file')
+  .option('--format <format>', 'Export format (json, yaml)', 'json')
+  .option('--output <path>', 'Output file path')
+  .action((projectName, options) => {
+    console.log(`Config export functionality coming soon for ${projectName}`);
+  });
+
+program.parse();
+
+async function createProject(projectName: string | undefined, options: CliOptions) {
 
   console.clear();
 
@@ -288,19 +270,32 @@ async function main() {
     }
   }
 
+  // Load config from file if specified
+  let baseConfig: Partial<ProjectConfig> = {};
+  if (options.config && existsSync(options.config)) {
+    try {
+      baseConfig = importConfig(options.config);
+      console.log(pc.green(`✓ Loaded configuration from ${options.config}`));
+    } catch (error) {
+      console.log(pc.red(`Failed to load config: ${error}`));
+      process.exit(1);
+    }
+  }
+
   // Step 1: Project Info
-  const projectName = args[0] || await text({
+  const finalProjectName = projectName || await text({
     message: 'What is your project name?',
     placeholder: 'my-awesome-app',
-    validate: validateProjectName,
+    initialValue: baseConfig.projectName,
+    validate: validateProjectNamePrompt,
   });
 
-  if (isCancel(projectName)) {
+  if (isCancel(finalProjectName)) {
     cancel('Operation cancelled');
     process.exit(0);
   }
 
-  config.projectName = projectName as string;
+  config.projectName = finalProjectName as string;
 
   if (!options.preset) {
     console.log(pc.dim('\n🚀 Choose a preset to quick-start your project, or customize everything yourself:'));
@@ -364,8 +359,8 @@ async function main() {
   const description = await text({
     message: 'Project description:',
     placeholder: 'A modern web application built with Better-T-Stack',
-    initialValue: config.projectName ? `A ${config.projectName.replace(/-/g, ' ')} application` : '',
-    validate: validateDescription,
+    initialValue: baseConfig.description || (config.projectName ? `A ${config.projectName.replace(/-/g, ' ')} application` : ''),
+    validate: validateDescriptionPrompt,
   });
 
   if (isCancel(description)) {
@@ -386,8 +381,8 @@ async function main() {
   const author = await text({
     message: 'Author name:',
     placeholder: defaultAuthor,
-    initialValue: defaultAuthor !== 'Your Name' ? defaultAuthor : '',
-    validate: validateAuthor,
+    initialValue: baseConfig.author || (defaultAuthor !== 'Your Name' ? defaultAuthor : ''),
+    validate: validateAuthorPrompt,
   });
 
   if (isCancel(author)) {
@@ -415,7 +410,7 @@ async function main() {
       process.exit(0);
     }
 
-    config.database = database as string;
+    config.database = database as DatabaseType;
 
     const auth = await multiselect({
       message: 'Authentication providers:',
@@ -432,7 +427,7 @@ async function main() {
       process.exit(0);
     }
 
-    config.auth = auth as string[];
+    config.auth = auth as AuthProvider[];
 
     // Step 3: Design
     const uiStyle = await select({
@@ -452,7 +447,7 @@ async function main() {
       process.exit(0);
     }
 
-    config.uiStyle = uiStyle as string;
+    config.uiStyle = uiStyle as UiStyle;
 
     // Step 4: Testing
     const testing = await multiselect({
@@ -470,7 +465,7 @@ async function main() {
       process.exit(0);
     }
 
-    config.testing = testing as string[];
+    config.testing = testing as TestingFramework[];
 
     // Step 5: DevOps
     const docker = await confirm({
@@ -500,7 +495,7 @@ async function main() {
       process.exit(0);
     }
 
-    config.cicd = cicd as string;
+    config.cicd = cicd as CiCdPlatform;
 
     // Step 6: AI Workflow
     const pbsLevel = await select({
@@ -519,7 +514,7 @@ async function main() {
       process.exit(0);
     }
 
-    config.pbsLevel = pbsLevel as string;
+    config.pbsLevel = pbsLevel as PbsLevel;
 
     // Step 7: Extras
     const pwa = await confirm({
@@ -535,11 +530,45 @@ async function main() {
     config.pwa = pwa as boolean;
   }
 
+  // Validate complete configuration
+  const validationContext = getValidationContext();
+  const configValidation = validateFullConfig(config, validationContext);
+
+  // Show warnings if any
+  const warnings = configValidation.filter(v => v.severity === 'warning');
+  if (warnings.length > 0) {
+    console.log(pc.yellow('\n⚠️  Configuration Warnings:'));
+    warnings.forEach(warning => {
+      console.log(pc.yellow(`   • ${warning.message}`));
+    });
+    console.log();
+  }
+
+  // Check for critical errors
+  const errors = configValidation.filter(v => v.severity === 'error');
+  if (errors.length > 0) {
+    console.log(pc.red('\n❌ Configuration Errors:'));
+    errors.forEach(error => {
+      console.log(pc.red(`   • ${error.message}`));
+    });
+    console.log('\nPlease fix these errors and try again.');
+    process.exit(1);
+  }
+
+  // Export configuration for template generation
+  const configPath = getDefaultConfigPath(config.projectName!);
+  try {
+    exportConfig(config as ProjectConfig, configPath);
+    console.log(pc.dim(`\n📄 Configuration saved to ${configPath}`));
+  } catch (error) {
+    console.log(pc.yellow(`Warning: Could not save configuration: ${error}`));
+  }
+
   // Generate project
   const s = spinner();
   s.start('Generating your project...');
 
-  // TODO: Implement actual scaffolding logic
+  // TODO: Implement actual scaffolding logic using config
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
   s.stop('Project generated successfully!');
@@ -566,7 +595,4 @@ async function main() {
   `));
 }
 
-main().catch((err) => {
-  console.error(pc.red('Error:'), err.message);
-  process.exit(1);
-});
+// Error handling is now handled by Commander.js
