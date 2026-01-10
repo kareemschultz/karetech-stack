@@ -1,0 +1,290 @@
+name: Release & Publish
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is-prerelease: ${{ steps.version.outputs.is-prerelease }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Install dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Extract version from tag
+      id: version
+      run: |
+        TAG=${GITHUB_REF#refs/tags/v}
+        echo "version=$TAG" >> $GITHUB_OUTPUT
+
+        # Check if this is a prerelease
+        if [[ $TAG == *"alpha"* ]] || [[ $TAG == *"beta"* ]] || [[ $TAG == *"rc"* ]]; then
+          echo "is-prerelease=true" >> $GITHUB_OUTPUT
+        else
+          echo "is-prerelease=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Validate version in package.json
+      run: |
+        PACKAGE_VERSION=$(node -p "require('./package.json').version")
+        TAG_VERSION="${{ steps.version.outputs.version }}"
+
+        if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+          echo "❌ Version mismatch: package.json ($PACKAGE_VERSION) != tag ($TAG_VERSION)"
+          exit 1
+        fi
+
+        echo "✅ Version validation passed: $TAG_VERSION"
+
+    - name: Run tests
+      run: bun run validate
+
+    - name: Validate all presets
+      run: |
+        RESULT=$(bun run src/presets/__tests__/runner.ts)
+        if [ $? -ne 0 ]; then
+          echo "❌ Preset validation failed"
+          echo "$RESULT"
+          exit 1
+        fi
+        echo "✅ All presets validation passed"
+
+  build:
+    name: Build Release
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Install dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Build CLI
+      run: bun run build
+
+    - name: Test build
+      run: |
+        # Test built CLI works
+        node dist/index.js --version
+        node dist/index.js check-env
+
+        # Test project creation
+        node dist/index.js create test-release --preset minimal --no-git --no-install
+        test -f test-release/package.json
+        rm -rf test-release
+
+    - name: Create tarball
+      run: npm pack
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: npm-package
+        path: '*.tgz'
+
+  publish-npm:
+    name: Publish to NPM
+    runs-on: ubuntu-latest
+    needs: [validate, build]
+    environment: release
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        registry-url: 'https://registry.npmjs.org'
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Install dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Build for production
+      run: bun run build
+
+    - name: Publish to NPM
+      run: |
+        if [ "${{ needs.validate.outputs.is-prerelease }}" = "true" ]; then
+          echo "Publishing prerelease version ${{ needs.validate.outputs.version }}"
+          npm publish --tag beta
+        else
+          echo "Publishing stable version ${{ needs.validate.outputs.version }}"
+          npm publish
+        fi
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate, build, publish-npm]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: npm-package
+
+    - name: Generate release notes
+      id: release-notes
+      run: |
+        # Generate changelog since last tag
+        LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+        if [ -z "$LAST_TAG" ]; then
+          echo "First release"
+          CHANGELOG="🎉 Initial release of create-karetech-stack"
+        else
+          echo "Generating changelog since $LAST_TAG"
+          CHANGELOG=$(git log $LAST_TAG..HEAD --pretty=format:"- %s (%an)" --reverse)
+        fi
+
+        # Create release notes
+        cat > release-notes.md << EOF
+        # Release ${{ needs.validate.outputs.version }}
+
+        ## Changes
+
+        $CHANGELOG
+
+        ## Installation
+
+        \`\`\`bash
+        # Via npm
+        npm install -g create-karetech-stack@${{ needs.validate.outputs.version }}
+
+        # Via bun
+        bun install -g create-karetech-stack@${{ needs.validate.outputs.version }}
+
+        # Via npx/bunx (no install)
+        npx create-karetech-stack@${{ needs.validate.outputs.version }} create my-app
+        bunx create-karetech-stack@${{ needs.validate.outputs.version }} create my-app
+        \`\`\`
+
+        ## Usage
+
+        \`\`\`bash
+        # Interactive wizard
+        create-karetech-stack create my-app
+
+        # With preset
+        create-karetech-stack create my-app --preset saas
+
+        # All available presets
+        create-karetech-stack --help
+        \`\`\`
+
+        ## What's Included
+
+        - ✅ 6 production-ready presets (saas, ecommerce, blog, devtool, portfolio, minimal)
+        - ✅ Better-T-Stack foundation (Bun, Hono, oRPC, Drizzle, Better Auth, TanStack)
+        - ✅ shadcn/ui v4 with 5 theme options
+        - ✅ E2E testing ready (Playwright + Puppeteer)
+        - ✅ Docker + CI/CD configured
+        - ✅ PBS system + Claude Code hooks
+        - ✅ Complete documentation structure
+
+        ## Documentation
+
+        - [Getting Started](https://github.com/kareemschultz/karetech-stack#readme)
+        - [Contributing Guide](https://github.com/kareemschultz/karetech-stack/blob/main/CONTRIBUTING.md)
+        - [API Reference](https://github.com/kareemschultz/karetech-stack/blob/main/docs/API.md)
+        - [Troubleshooting](https://github.com/kareemschultz/karetech-stack/blob/main/docs/TROUBLESHOOTING.md)
+        EOF
+
+    - name: Create GitHub release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ needs.validate.outputs.version }}
+        name: Release v${{ needs.validate.outputs.version }}
+        body_path: release-notes.md
+        prerelease: ${{ needs.validate.outputs.is-prerelease == 'true' }}
+        files: |
+          *.tgz
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  post-release:
+    name: Post Release Tasks
+    runs-on: ubuntu-latest
+    needs: [validate, publish-npm, create-github-release]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Test published package
+      run: |
+        # Wait a bit for NPM to propagate
+        sleep 30
+
+        # Test installation from NPM
+        npm install -g create-karetech-stack@${{ needs.validate.outputs.version }}
+
+        # Test CLI works
+        create-karetech-stack --version
+        create-karetech-stack --help
+
+        # Test quick project creation
+        create-karetech-stack create test-published --preset minimal --no-git --no-install
+        test -f test-published/package.json
+
+        echo "✅ Published package verification successful"
+
+    - name: Update documentation
+      if: needs.validate.outputs.is-prerelease == 'false'
+      run: |
+        echo "📝 Consider updating documentation for stable release:"
+        echo "- Update README.md installation instructions"
+        echo "- Update CHANGELOG.md with release notes"
+        echo "- Check if docs need updates for new features"
+
+    - name: Success notification
+      run: |
+        echo "🎉 Release v${{ needs.validate.outputs.version }} published successfully!"
+        echo "📦 NPM: https://www.npmjs.com/package/create-karetech-stack"
+        echo "🐙 GitHub: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.validate.outputs.version }}"

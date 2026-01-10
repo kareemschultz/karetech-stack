@@ -1,0 +1,369 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate-pr:
+    name: Validate PR
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout PR code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.bun/install/cache
+        key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+        restore-keys: |
+          ${{ runner.os }}-bun-
+
+    - name: Install dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Check for breaking changes
+      run: |
+        echo "Checking for potential breaking changes..."
+
+        # Check if package.json version changed
+        git fetch origin main
+        if git diff origin/main -- package.json | grep -q '"version"'; then
+          echo "⚠️ Package version changed in PR - ensure this is intentional"
+        fi
+
+        # Check for changes in critical files
+        CRITICAL_FILES=("src/index.ts" "src/types.ts" "src/presets/index.ts")
+        for file in "${CRITICAL_FILES[@]}"; do
+          if git diff origin/main -- "$file" | grep -q "^-"; then
+            echo "⚠️ Changes detected in critical file: $file"
+          fi
+        done
+
+    - name: Type checking
+      run: bun run typecheck
+
+    - name: Linting
+      run: bun run lint
+
+    - name: Unit tests
+      run: bun test
+
+    - name: Preset validation
+      run: |
+        echo "Validating all presets..."
+        RESULT=$(bun run src/presets/__tests__/runner.ts)
+        EXIT_CODE=$?
+
+        if [ $EXIT_CODE -ne 0 ]; then
+          echo "❌ Preset validation failed!"
+          echo "$RESULT"
+          exit 1
+        fi
+
+        echo "✅ All presets validation passed"
+
+    - name: Build CLI
+      run: bun run build
+
+    - name: Test CLI changes
+      run: |
+        echo "Testing CLI functionality..."
+
+        # Test help and version
+        node dist/index.js --help
+        node dist/index.js --version
+
+        # Test environment check
+        node dist/index.js check-env
+
+        # Test each preset
+        PRESETS=("saas" "ecommerce" "blog" "devtool" "portfolio" "minimal")
+
+        for preset in "${PRESETS[@]}"; do
+          echo "Testing preset: $preset"
+
+          # Create test project
+          node dist/index.js create "test-$preset" --preset "$preset" --no-git --no-install
+
+          # Verify essential files
+          if [ ! -f "test-$preset/package.json" ]; then
+            echo "❌ Missing package.json for preset $preset"
+            exit 1
+          fi
+
+          if [ ! -f "test-$preset/README.md" ]; then
+            echo "❌ Missing README.md for preset $preset"
+            exit 1
+          fi
+
+          # Validate package.json
+          if ! node -e "JSON.parse(require('fs').readFileSync('test-$preset/package.json', 'utf8'))" > /dev/null 2>&1; then
+            echo "❌ Invalid package.json for preset $preset"
+            exit 1
+          fi
+
+          # Cleanup
+          rm -rf "test-$preset"
+
+          echo "✅ Preset $preset validated"
+        done
+
+  security-check:
+    name: Security Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout PR code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Install dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Audit dependencies
+      run: |
+        echo "Running security audit..."
+        bun audit || {
+          echo "⚠️ Security vulnerabilities found"
+          echo "Please review and fix any high/critical vulnerabilities"
+        }
+
+    - name: Check for sensitive data
+      run: |
+        echo "Checking for sensitive data..."
+
+        # Check for common sensitive patterns
+        if grep -r -E "(password|secret|key|token)" --include="*.ts" --include="*.js" --include="*.json" src/ templates/ || true; then
+          echo "⚠️ Potential sensitive data found - please review"
+        fi
+
+        # Check for hardcoded URLs or credentials
+        if grep -r -E "(http://|https://[^/]*\.[^/]*)" --include="*.ts" --include="*.js" src/ templates/ | grep -v "example\|placeholder\|template" || true; then
+          echo "⚠️ Hardcoded URLs found - consider making them configurable"
+        fi
+
+  documentation-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout PR code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Check for documentation updates
+      run: |
+        echo "Checking if documentation needs updates..."
+
+        # Check if src/ changes require doc updates
+        git fetch origin main
+        if git diff origin/main --name-only | grep -q "^src/"; then
+          echo "📝 Source code changes detected"
+
+          # Check if API.md was updated
+          if ! git diff origin/main --name-only | grep -q "docs/API.md"; then
+            echo "⚠️ Consider updating docs/API.md for API changes"
+          fi
+
+          # Check if CHANGELOG.md was updated
+          if ! git diff origin/main --name-only | grep -q "CHANGELOG.md"; then
+            echo "ℹ️ Consider updating CHANGELOG.md for user-facing changes"
+          fi
+        fi
+
+        # Check if preset changes require documentation updates
+        if git diff origin/main --name-only | grep -q "src/presets/"; then
+          echo "🎨 Preset changes detected - ensure README.md examples are up to date"
+        fi
+
+    - name: Validate markdown
+      uses: DavidAnson/markdownlint-action@v9
+      with:
+        files: '**/*.md'
+        config: '.markdownlint.json'
+        ignore: 'node_modules'
+        fix: false
+      continue-on-error: true
+
+    - name: Check required docs exist
+      run: |
+        REQUIRED_DOCS=(
+          "README.md"
+          "CONTRIBUTING.md"
+          "CLAUDE.md"
+          "constitution.md"
+          "docs/API.md"
+          "docs/TROUBLESHOOTING.md"
+          "docs/PBS_MASTER_SYSTEM.md"
+          "docs/FORK_PLAN.md"
+          "docs/ARCHITECTURE.md"
+          "docs/PROJECT_STATUS.md"
+          "docs/CHANGELOG.md"
+        )
+
+        for doc in "${REQUIRED_DOCS[@]}"; do
+          if [ ! -f "$doc" ]; then
+            echo "❌ Required documentation missing: $doc"
+            exit 1
+          fi
+        done
+
+        echo "✅ All required documentation files present"
+
+  performance-check:
+    name: Performance Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout PR code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Install dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Build and test performance
+      run: |
+        echo "Building CLI..."
+        time bun run build
+
+        echo "Testing CLI performance..."
+
+        # Test project creation speed
+        for i in {1..3}; do
+          echo "Performance test run $i:"
+          time node dist/index.js create "perf-test-$i" --preset minimal --no-git --no-install
+          rm -rf "perf-test-$i"
+        done
+
+    - name: Check bundle size
+      run: |
+        echo "Checking bundle size..."
+        ls -lh dist/index.js
+
+        SIZE=$(stat -c%s dist/index.js)
+        SIZE_MB=$((SIZE / 1024 / 1024))
+
+        if [ $SIZE_MB -gt 5 ]; then
+          echo "⚠️ Bundle size is ${SIZE_MB}MB - consider optimizing"
+        else
+          echo "✅ Bundle size is acceptable: ${SIZE_MB}MB"
+        fi
+
+  compatibility-check:
+    name: Compatibility Check
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18, 20]
+
+    steps:
+    - name: Checkout PR code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Install dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Build CLI
+      run: bun run build
+
+    - name: Test CLI on ${{ matrix.os }}
+      run: |
+        # Test basic CLI functionality
+        node dist/index.js --version
+        node dist/index.js --help
+
+        # Test project creation
+        node dist/index.js create test-compat --preset minimal --no-git --no-install
+
+        # Verify project structure
+        test -f test-compat/package.json
+        test -f test-compat/README.md
+
+        # Cleanup
+        rm -rf test-compat
+      shell: bash
+
+  summary:
+    name: PR Summary
+    runs-on: ubuntu-latest
+    needs: [validate-pr, security-check, documentation-check, performance-check]
+    if: always()
+
+    steps:
+    - name: Generate summary
+      run: |
+        echo "## Pull Request Validation Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        if [ "${{ needs.validate-pr.result }}" = "success" ]; then
+          echo "✅ **Core Validation**: Passed" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Core Validation**: Failed" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        if [ "${{ needs.security-check.result }}" = "success" ]; then
+          echo "✅ **Security Check**: Passed" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ **Security Check**: Issues detected" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        if [ "${{ needs.documentation-check.result }}" = "success" ]; then
+          echo "✅ **Documentation**: Passed" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "📝 **Documentation**: Needs attention" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        if [ "${{ needs.performance-check.result }}" = "success" ]; then
+          echo "✅ **Performance**: Passed" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚡ **Performance**: Issues detected" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+        echo "- Review any failed checks above" >> $GITHUB_STEP_SUMMARY
+        echo "- Address feedback from code review" >> $GITHUB_STEP_SUMMARY
+        echo "- Update documentation if needed" >> $GITHUB_STEP_SUMMARY
+        echo "- Ensure all tests pass before merging" >> $GITHUB_STEP_SUMMARY

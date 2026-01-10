@@ -1,0 +1,14 @@
+{
+  "moderate": true,
+  "high": true,
+  "critical": true,
+  "allowlist": [],
+  "skip-dev": false,
+  "output-format": "text",
+  "summary-format": "text",
+  "show-found": true,
+  "show-not-found": false,
+  "report-type": "important",
+  "advisories": [],
+  "whitelist": []
+}

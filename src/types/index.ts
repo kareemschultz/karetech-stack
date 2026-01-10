@@ -49,7 +49,7 @@ export interface ProjectConfig {
 }
 
 // Database options
-export type DatabaseType = 'postgresql' | 'turso' | 'sqlite';
+export type DatabaseType = 'postgresql' | 'turso' | 'sqlite' | 'none';
 
 // Authentication providers
 export type AuthProvider = 'email' | 'oauth' | 'magic-links' | 'github';
@@ -103,7 +103,7 @@ export type ErrorTrackingProvider = 'sentry' | 'bugsnag' | 'rollbar' | 'none';
 export interface ValidationError {
   field: keyof ProjectConfig;
   message: string;
-  severity: 'error' | 'warning';
+  severity: 'error' | 'warning' | 'info';
 }
 
 // CLI options interface

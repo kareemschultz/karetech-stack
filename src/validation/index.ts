@@ -7,6 +7,7 @@ import { existsSync } from 'fs';
 import { resolve } from 'path';
 import { execSync } from 'child_process';
 import { ValidationError, ValidationContext, ProjectConfig, DatabaseType, AuthProvider, TestingFramework } from '../types';
+import { validatePbsIntegration, validateTrackingConfiguration, generateTrackingRecommendations } from './presets';
 
 // Reserved project names that should not be used
 const RESERVED_NAMES = [
@@ -404,8 +405,55 @@ export function validateFullConfig(config: Partial<ProjectConfig>, context?: Val
     errors.push(...validateDevOps(config.docker, config.cicd, config.deployTarget));
   }
 
+  // Enhanced PBS/Beads tracking validation (convert to standard ValidationError format)
+  if (config as ProjectConfig) {
+    const pbsErrors = validatePbsIntegration(config as ProjectConfig);
+    pbsErrors.forEach(pbsError => {
+      errors.push({
+        field: pbsError.field as keyof ProjectConfig,
+        message: `${pbsError.message}${pbsError.suggestion ? ` (${pbsError.suggestion})` : ''}`,
+        severity: pbsError.severity
+      });
+    });
+  }
+
   return errors;
 }
+
+/**
+ * Enhanced validation functions for prompts (wrapper functions)
+ */
+export function validateProjectNamePrompt(value: string): string | void {
+  const errors = validateProjectName(value);
+  const criticalError = errors.find(e => e.severity === 'error');
+  return criticalError ? criticalError.message : undefined;
+}
+
+export function validateDescriptionPrompt(value: string): string | void {
+  const errors = validateDescription(value);
+  const criticalError = errors.find(e => e.severity === 'error');
+  return criticalError ? criticalError.message : undefined;
+}
+
+export function validateAuthorPrompt(value: string): string | void {
+  const errors = validateAuthor(value);
+  const criticalError = errors.find(e => e.severity === 'error');
+  return criticalError ? criticalError.message : undefined;
+}
+
+/**
+ * Enhanced tracking validation and recommendations export
+ */
+export {
+  validatePbsIntegration,
+  validateTrackingConfiguration,
+  generateTrackingRecommendations,
+  generateTrackingChecklist,
+  validatePreset,
+  validateAllPresets,
+  validatePresetTracking,
+  validateAllPresetsTracking
+} from './presets';
 
 /**
  * Get validation context from environment

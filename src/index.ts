@@ -14,9 +14,17 @@ import { execSync } from 'child_process';
 
 // Import our enhanced systems
 import { ProjectConfig, CliOptions, DatabaseType, AuthProvider, UiStyle, TestingFramework, CiCdPlatform, PbsLevel } from './types';
-import { validateProjectName, validateDescription, validateAuthor, validateFullConfig, getValidationContext } from './validation';
+import { validateProjectName, validateDescription, validateAuthor, validateFullConfig, getValidationContext, generateTrackingRecommendations } from './validation';
 import { exportConfig, importConfig, getDefaultConfigPath, validateConfig as validateConfigData } from './config';
 import { runEnvironmentCheck, printEnvironmentReport } from './utils/environment';
+import { runEnhancedWizard } from './wizard';
+import { generateBaseProject } from './generators/base';
+import { generateTestingFramework } from './generators/testing';
+import { generateDevOpsInfrastructure } from './generators/devops';
+import { generatePBSTemplates } from './generators/pbs';
+import { generateClaudeCodeConfiguration } from './generators/claude-code';
+import { generatePresetSystem } from './generators/presets';
+import { presets, getPreset, getPresetNames, applyPresetToConfig, listPresets } from './presets';
 
 const VERSION = '0.0.1';
 
@@ -40,172 +48,7 @@ function validateAuthorPrompt(value: string): string | void {
 }
 
 // Configuration interfaces are now imported from ./types
-
-// Preset configurations
-const presets = {
-  saas: {
-    description: 'Full-featured SaaS starter with PostgreSQL, full auth, and complete DevOps',
-    database: 'postgresql',
-    auth: ['email', 'oauth'],
-    apiStyle: 'orpc',
-    uiStyle: 'mira',
-    baseColor: 'zinc',
-    accentColor: 'blue',
-    font: 'geist',
-    icons: 'lucide',
-    borderRadius: '0.5',
-    testing: ['playwright'],
-    unitTesting: true,
-    exampleTests: true,
-    docker: true,
-    cicd: 'github-actions',
-    deployTarget: 'vercel',
-    pbsLevel: 'full',
-    beadsIntegration: true,
-    claudeCodeHooks: true,
-    mcpServers: ['filesystem', 'github'],
-    pwa: false,
-    analytics: 'vercel',
-    email: 'resend',
-    errorTracking: 'sentry',
-    featureFlags: false
-  },
-  ecommerce: {
-    description: 'E-commerce platform with Stripe integration and full testing',
-    database: 'postgresql',
-    auth: ['email', 'oauth', 'magic-links'],
-    apiStyle: 'orpc',
-    uiStyle: 'nova',
-    baseColor: 'slate',
-    accentColor: 'green',
-    font: 'inter',
-    icons: 'heroicons',
-    borderRadius: '0.75',
-    testing: ['playwright', 'puppeteer'],
-    unitTesting: true,
-    exampleTests: true,
-    docker: true,
-    cicd: 'github-actions',
-    deployTarget: 'vercel',
-    pbsLevel: 'full',
-    beadsIntegration: true,
-    claudeCodeHooks: true,
-    mcpServers: ['filesystem', 'github', 'postgres'],
-    pwa: true,
-    analytics: 'vercel',
-    email: 'resend',
-    errorTracking: 'sentry',
-    featureFlags: true
-  },
-  blog: {
-    description: 'Publishing platform with Turso and optimized for content',
-    database: 'turso',
-    auth: ['email'],
-    apiStyle: 'orpc',
-    uiStyle: 'lyra',
-    baseColor: 'stone',
-    accentColor: 'orange',
-    font: 'crimson',
-    icons: 'lucide',
-    borderRadius: '0.5',
-    testing: ['playwright'],
-    unitTesting: true,
-    exampleTests: true,
-    docker: false,
-    cicd: 'vercel',
-    deployTarget: 'vercel',
-    pbsLevel: 'docs',
-    beadsIntegration: false,
-    claudeCodeHooks: true,
-    mcpServers: ['filesystem'],
-    pwa: false,
-    analytics: 'vercel',
-    email: 'resend',
-    errorTracking: 'none',
-    featureFlags: false
-  },
-  devtool: {
-    description: 'Developer tools with GitHub auth and testing focus',
-    database: 'postgresql',
-    auth: ['github'],
-    apiStyle: 'orpc',
-    uiStyle: 'mira',
-    baseColor: 'zinc',
-    accentColor: 'green',
-    font: 'mono',
-    icons: 'lucide',
-    borderRadius: '0.25',
-    testing: ['vitest'],
-    unitTesting: true,
-    exampleTests: true,
-    docker: false,
-    cicd: 'github-actions',
-    deployTarget: 'vercel',
-    pbsLevel: 'minimal',
-    beadsIntegration: false,
-    claudeCodeHooks: true,
-    mcpServers: ['filesystem', 'github'],
-    pwa: false,
-    analytics: 'none',
-    email: 'none',
-    errorTracking: 'none',
-    featureFlags: false
-  },
-  portfolio: {
-    description: 'Personal portfolio site with minimal setup',
-    database: 'sqlite',
-    auth: [],
-    apiStyle: 'orpc',
-    uiStyle: 'vega',
-    baseColor: 'neutral',
-    accentColor: 'violet',
-    font: 'geist',
-    icons: 'lucide',
-    borderRadius: '1',
-    testing: [],
-    unitTesting: false,
-    exampleTests: false,
-    docker: false,
-    cicd: 'vercel',
-    deployTarget: 'vercel',
-    pbsLevel: 'none',
-    beadsIntegration: false,
-    claudeCodeHooks: false,
-    mcpServers: [],
-    pwa: false,
-    analytics: 'vercel',
-    email: 'none',
-    errorTracking: 'none',
-    featureFlags: false
-  },
-  minimal: {
-    description: 'Minimal setup for simple applications',
-    database: 'sqlite',
-    auth: ['email'],
-    apiStyle: 'orpc',
-    uiStyle: 'default',
-    baseColor: 'slate',
-    accentColor: 'blue',
-    font: 'inter',
-    icons: 'lucide',
-    borderRadius: '0.5',
-    testing: [],
-    unitTesting: false,
-    exampleTests: false,
-    docker: false,
-    cicd: 'none',
-    deployTarget: 'vercel',
-    pbsLevel: 'none',
-    beadsIntegration: false,
-    claudeCodeHooks: false,
-    mcpServers: [],
-    pwa: false,
-    analytics: 'none',
-    email: 'none',
-    errorTracking: 'none',
-    featureFlags: false
-  }
-};
+// Presets are now imported from ./presets module
 
 // CLI setup
 const program = new Command()
@@ -250,10 +93,16 @@ program
 program.parse();
 
 async function createProject(projectName: string | undefined, options: CliOptions) {
+  // Check if running in non-interactive mode (CI or with full preset options)
+  const isNonInteractive = process.env.CI === 'true' ||
+    (options.preset && projectName && (options.noInstall || options.noGit));
 
-  console.clear();
-
-  intro(pc.bgCyan(pc.black(' create-karetech-stack ')));
+  if (!isNonInteractive) {
+    console.clear();
+    intro(pc.bgCyan(pc.black(' create-karetech-stack ')));
+  } else {
+    console.log(pc.cyan('create-karetech-stack'));
+  }
 
   // Initialize configuration
   const config: Partial<ProjectConfig> = {};
@@ -283,62 +132,72 @@ async function createProject(projectName: string | undefined, options: CliOption
   }
 
   // Step 1: Project Info
-  const finalProjectName = projectName || await text({
-    message: 'What is your project name?',
-    placeholder: 'my-awesome-app',
-    initialValue: baseConfig.projectName,
-    validate: validateProjectNamePrompt,
-  });
+  let finalProjectName: string;
+  if (projectName) {
+    finalProjectName = projectName;
+  } else {
+    const namePrompt = await text({
+      message: 'What is your project name?',
+      placeholder: 'my-awesome-app',
+      initialValue: baseConfig.projectName,
+      validate: validateProjectNamePrompt,
+    });
 
-  if (isCancel(finalProjectName)) {
-    cancel('Operation cancelled');
-    process.exit(0);
+    if (isCancel(namePrompt)) {
+      cancel('Operation cancelled');
+      process.exit(0);
+    }
+
+    finalProjectName = namePrompt as string;
   }
 
-  config.projectName = finalProjectName as string;
+  config.projectName = finalProjectName;
 
   if (!options.preset) {
     console.log(pc.dim('\n🚀 Choose a preset to quick-start your project, or customize everything yourself:'));
 
+    // Generate preset options dynamically from preset system
+    const presetOptions = [
+      {
+        value: 'saas',
+        label: '🏢 SaaS Starter',
+        hint: `${presets.saas.database} • Full Auth • Docker • CI/CD • ${presets.saas.pbsLevel?.toUpperCase() || 'FULL'} PBS`
+      },
+      {
+        value: 'ecommerce',
+        label: '🛒 E-commerce',
+        hint: `${presets.ecommerce.database} • Stripe • Full Testing • Complete DevOps`
+      },
+      {
+        value: 'blog',
+        label: '📝 Blog/Publishing',
+        hint: `${presets.blog.database} • Content-optimized • ${presets.blog.deployTarget} Deploy`
+      },
+      {
+        value: 'devtool',
+        label: '🔧 Developer Tool',
+        hint: `${presets.devtool.database} • GitHub Auth • Testing Focus`
+      },
+      {
+        value: 'portfolio',
+        label: '👤 Portfolio',
+        hint: `${presets.portfolio.database} • Minimal • Personal Sites`
+      },
+      {
+        value: 'minimal',
+        label: '⚡ Minimal',
+        hint: `${presets.minimal.database} • Basic Setup • Simple Apps`
+      },
+      {
+        value: 'custom',
+        label: '⚙️  Custom Setup',
+        hint: 'Configure everything step-by-step'
+      }
+    ];
+
     const preset = await select({
       message: 'Select a preset:',
-      options: [
-        {
-          value: 'saas',
-          label: '🏢 SaaS Starter',
-          hint: 'PostgreSQL • Full Auth • Docker • CI/CD • Full PBS'
-        },
-        {
-          value: 'ecommerce',
-          label: '🛒 E-commerce',
-          hint: 'PostgreSQL • Stripe • Full Testing • Complete DevOps'
-        },
-        {
-          value: 'blog',
-          label: '📝 Blog/Publishing',
-          hint: 'Turso • Content-optimized • Vercel Deploy'
-        },
-        {
-          value: 'devtool',
-          label: '🔧 Developer Tool',
-          hint: 'PostgreSQL • GitHub Auth • Testing Focus'
-        },
-        {
-          value: 'portfolio',
-          label: '👤 Portfolio',
-          hint: 'SQLite • Minimal • Personal Sites'
-        },
-        {
-          value: 'minimal',
-          label: '⚡ Minimal',
-          hint: 'SQLite • Basic Setup • Simple Apps'
-        },
-        {
-          value: 'custom',
-          label: '⚙️  Custom Setup',
-          hint: 'Configure everything step-by-step'
-        }
-      ],
+      options: presetOptions,
     });
 
     if (isCancel(preset)) {
@@ -356,19 +215,27 @@ async function createProject(projectName: string | undefined, options: CliOption
     }
   }
 
-  const description = await text({
-    message: 'Project description:',
-    placeholder: 'A modern web application built with Better-T-Stack',
-    initialValue: baseConfig.description || (config.projectName ? `A ${config.projectName.replace(/-/g, ' ')} application` : ''),
-    validate: validateDescriptionPrompt,
-  });
+  let description: string;
+  if (options.preset && config.description) {
+    // Use preset description or generate default
+    description = config.description || `A ${config.projectName?.replace(/-/g, ' ')} application`;
+  } else {
+    const descPrompt = await text({
+      message: 'Project description:',
+      placeholder: 'A modern web application built with Better-T-Stack',
+      initialValue: baseConfig.description || (config.projectName ? `A ${config.projectName.replace(/-/g, ' ')} application` : ''),
+      validate: validateDescriptionPrompt,
+    });
 
-  if (isCancel(description)) {
-    cancel('Operation cancelled');
-    process.exit(0);
+    if (isCancel(descPrompt)) {
+      cancel('Operation cancelled');
+      process.exit(0);
+    }
+
+    description = descPrompt as string;
   }
 
-  config.description = description as string;
+  config.description = description;
 
   // Try to get git user name as default
   let defaultAuthor = 'Your Name';
@@ -378,19 +245,30 @@ async function createProject(projectName: string | undefined, options: CliOption
     // Git config not available, use default
   }
 
-  const author = await text({
-    message: 'Author name:',
-    placeholder: defaultAuthor,
-    initialValue: baseConfig.author || (defaultAuthor !== 'Your Name' ? defaultAuthor : ''),
-    validate: validateAuthorPrompt,
-  });
+  let author: string;
+  if (options.preset && defaultAuthor !== 'Your Name') {
+    // Use git config author for preset mode
+    author = baseConfig.author || defaultAuthor;
+  } else if (options.preset) {
+    // Use default for preset mode when no git config
+    author = baseConfig.author || 'Your Name';
+  } else {
+    const authorPrompt = await text({
+      message: 'Author name:',
+      placeholder: defaultAuthor,
+      initialValue: baseConfig.author || (defaultAuthor !== 'Your Name' ? defaultAuthor : ''),
+      validate: validateAuthorPrompt,
+    });
 
-  if (isCancel(author)) {
-    cancel('Operation cancelled');
-    process.exit(0);
+    if (isCancel(authorPrompt)) {
+      cancel('Operation cancelled');
+      process.exit(0);
+    }
+
+    author = authorPrompt as string;
   }
 
-  config.author = author as string;
+  config.author = author;
 
   // Only show additional wizard steps if not using a preset or if using custom
   if (!options.preset || options.preset === 'custom') {
@@ -564,16 +442,117 @@ async function createProject(projectName: string | undefined, options: CliOption
     console.log(pc.yellow(`Warning: Could not save configuration: ${error}`));
   }
 
-  // Generate project
+  // Fill in any missing configuration with defaults
+  const completeConfig: ProjectConfig = {
+      projectName: config.projectName!,
+      description: config.description!,
+      author: config.author!,
+      preset: options.preset,
+      database: config.database || 'sqlite',
+      auth: config.auth || ['email'],
+      apiStyle: config.apiStyle || 'orpc',
+      uiStyle: config.uiStyle || 'default',
+      baseColor: config.baseColor || 'slate',
+      accentColor: config.accentColor || 'blue',
+      font: config.font || 'inter',
+      icons: config.icons || 'lucide',
+      borderRadius: config.borderRadius || '0.5',
+      testing: config.testing || [],
+      unitTesting: config.unitTesting !== undefined ? config.unitTesting : true,
+      exampleTests: config.exampleTests !== undefined ? config.exampleTests : true,
+      docker: config.docker || false,
+      cicd: config.cicd || 'vercel',
+      deployTarget: config.deployTarget || 'vercel',
+      pbsLevel: config.pbsLevel || 'minimal',
+      beadsIntegration: config.beadsIntegration || false,
+      claudeCodeHooks: config.claudeCodeHooks || false,
+      mcpServers: config.mcpServers || [],
+      pwa: config.pwa || false,
+      analytics: config.analytics || 'none',
+      email: config.email || 'none',
+      errorTracking: config.errorTracking || 'none',
+      featureFlags: config.featureFlags || false
+    };
+
+  // Generate project using integrated parallel systems
   const s = spinner();
   s.start('Generating your project...');
 
-  // TODO: Implement actual scaffolding logic using config
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  try {
+    s.message('Creating base project structure...');
 
-  s.stop('Project generated successfully!');
+    // System 1: Generate base project (src/generators/base.ts)
+    await generateBaseProject(completeConfig);
 
-  // Display configuration summary
+    s.message('Setting up testing framework...');
+
+    // System 2: Generate testing configuration (src/generators/testing.ts)
+    if (completeConfig.testing.length > 0 || completeConfig.unitTesting) {
+      const projectDir = resolve(process.cwd(), completeConfig.projectName);
+      await generateTestingFramework(projectDir, completeConfig);
+    }
+
+    s.message('Configuring DevOps infrastructure...');
+
+    // System 3: Generate DevOps infrastructure (src/generators/devops.ts)
+    if (completeConfig.docker || completeConfig.cicd !== 'none' || completeConfig.deployTarget !== 'manual') {
+      const projectDir = resolve(process.cwd(), completeConfig.projectName);
+      await generateDevOpsInfrastructure(projectDir, completeConfig);
+    }
+
+    s.message('Generating PBS documentation and AI workflow...');
+
+    // Terminal 1 System: Generate PBS documentation templates (src/generators/pbs.ts)
+    if (completeConfig.pbsLevel !== 'none') {
+      const projectDir = resolve(process.cwd(), completeConfig.projectName);
+      await generatePBSTemplates(projectDir, completeConfig);
+    }
+
+    // Terminal 1 System: Generate Claude Code configuration (src/generators/claude-code.ts)
+    if (completeConfig.pbsLevel !== 'none') {
+      const projectDir = resolve(process.cwd(), completeConfig.projectName);
+      await generateClaudeCodeConfiguration(projectDir, completeConfig);
+    }
+
+    s.message('Setting up preset system and final configuration...');
+
+    // Terminal 2 System: Generate enhanced preset system (src/generators/presets.ts)
+    const projectDir = resolve(process.cwd(), completeConfig.projectName);
+    await generatePresetSystem(projectDir, completeConfig);
+
+    s.message('Finalizing project setup...');
+
+    // Optional: Run post-generation steps
+    if (options.git !== false) {
+      try {
+        const projectDir = resolve(process.cwd(), completeConfig.projectName);
+        execSync('git init', { cwd: projectDir, stdio: 'ignore' });
+        execSync('git add .', { cwd: projectDir, stdio: 'ignore' });
+        execSync('git commit -m "Initial commit from create-karetech-stack"', { cwd: projectDir, stdio: 'ignore' });
+      } catch (error) {
+        console.log(pc.yellow('\n⚠️  Git initialization failed, but project was created successfully'));
+      }
+    }
+
+    // Optional: Install dependencies
+    if (options.install !== false) {
+      try {
+        const projectDir = resolve(process.cwd(), completeConfig.projectName);
+        s.message('Installing dependencies...');
+        execSync('bun install', { cwd: projectDir, stdio: 'ignore' });
+      } catch (error) {
+        console.log(pc.yellow('\n⚠️  Dependency installation failed, run "bun install" manually'));
+      }
+    }
+
+    s.stop('Project generated successfully!');
+  } catch (error) {
+    s.stop('Project generation failed');
+    console.log(pc.red(`\n❌ Error: ${error}`));
+    process.exit(1);
+  }
+
+  // Display enhanced configuration summary with tracking information
   console.log(pc.dim('\nProject Configuration:'));
   console.log(pc.dim(`• Name: ${config.projectName}`));
   console.log(pc.dim(`• Database: ${config.database || 'Not specified'}`));
@@ -584,15 +563,37 @@ async function createProject(projectName: string | undefined, options: CliOption
   console.log(pc.dim(`• CI/CD: ${config.cicd || 'None'}`));
   console.log(pc.dim(`• PBS Level: ${config.pbsLevel || 'None'}`));
 
-  outro(pc.green(`
-  ${pc.bold('Next steps:')}
+  // Enhanced tracking information
+  console.log(pc.dim(`• Beads Integration: ${config.beadsIntegration ? 'Yes' : 'No'}`));
+  console.log(pc.dim(`• Claude Code Hooks: ${config.claudeCodeHooks ? 'Yes' : 'No'}`));
+  console.log(pc.dim(`• MCP Servers: ${config.mcpServers?.join(', ') || 'None'}`));
+
+  // Display tracking recommendations
+  try {
+    const trackingRecommendations = generateTrackingRecommendations(completeConfig);
+    if (trackingRecommendations.length > 1) { // Skip the status message
+      console.log(pc.yellow('\n📋 Tracking & PBS Recommendations:'));
+      trackingRecommendations.slice(1).forEach(recommendation => {
+        console.log(pc.yellow(`   ${recommendation}`));
+      });
+    }
+  } catch (error) {
+    // Silently skip recommendations if there's an error
+  }
+
+  if (!isNonInteractive) {
+    outro(pc.green(`
+    ${pc.bold('Next steps:')}
 
   cd ${config.projectName}
   bun install
   bun dev
 
   ${pc.dim('Happy coding! 🚀')}
-  `));
+    `));
+  } else {
+    console.log(pc.green(`✅ Project ${config.projectName} created successfully!`));
+  }
 }
 
 // Error handling is now handled by Commander.js

@@ -1,0 +1,20 @@
+name: Status Check
+
+on:
+  push:
+    branches: [ main ]
+  workflow_run:
+    workflows: ["CI", "Release & Publish"]
+    types: [completed]
+
+jobs:
+  status:
+    name: Repository Status
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Update repository status
+      run: |
+        echo "Repository status updated"
+        echo "Workflows: CI, PR Validation, Release & Publish"
+        echo "Status: Active and automated"

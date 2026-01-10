@@ -9,12 +9,18 @@
   "main": "./dist/index.js",
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build": "bun build src/index.ts --outdir dist --target node",
     "test": "bun test",
+    "test:unit": "bun test src/",
+    "test:e2e": "bun run tests/run-e2e.ts",
+    "test:e2e:quick": "bun run tests/run-e2e.ts --quick",
+    "test:e2e:verbose": "bun run tests/run-e2e.ts --verbose",
+    "test:all": "bun run test && bun run test:e2e",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/",
+    "lint": "eslint src/ tests/",
     "format": "prettier --write .",
-    "prepublishOnly": "bun run build"
+    "validate": "bun run typecheck && bun run lint && bun run test:all",
+    "prepublishOnly": "bun run build && bun run validate"
   },
   "keywords": [
     "scaffold",
@@ -60,7 +66,7 @@
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.57.0",
     "prettier": "^3.2.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.9.3"
   },
   "files": [
     "dist",
