@@ -4,8 +4,8 @@
  */
 
 import { promises as fs } from 'fs';
-import { join, resolve } from 'path';
-import { existsSync } from 'fs';
+import { join, resolve, dirname } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 import * as ejs from 'ejs';
 import { ProjectConfig, PresetConfig } from '../types';
 import { presets, getPreset, validatePresetName, applyPresetToConfig } from '../presets';
@@ -433,6 +433,12 @@ export async function generatePresetSchema(outputPath: string): Promise<void> {
     "required": ["name", "description", "category"],
     "additionalProperties": false
   };
+
+  // Ensure directory exists
+  const outputDir = dirname(outputPath);
+  if (!existsSync(outputDir)) {
+    mkdirSync(outputDir, { recursive: true });
+  }
 
   await fs.writeFile(outputPath, JSON.stringify(schema, null, 2), 'utf-8');
 }

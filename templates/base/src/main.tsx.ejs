@@ -90,6 +90,6 @@ function AppWithErrorBoundary() {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <% if (errorTracking === 'bugsnag') { %><<%= 'AppWithErrorBoundary' %> /></% } else { %><App /></% } %>
+    <% if (errorTracking === 'bugsnag') { %><AppWithErrorBoundary /><% } else { %><App /><% } %>
   </React.StrictMode>,
 )

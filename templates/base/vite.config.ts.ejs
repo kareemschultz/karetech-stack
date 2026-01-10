@@ -79,7 +79,7 @@ export default defineConfig({
           api: ['@trpc/client', '@trpc/react-query'],<% } %>
           router: ['@tanstack/react-router']<% if (auth.length > 0) { %>,
           auth: ['better-auth']<% } %><% if (database !== 'none') { %>,
-          db: ['drizzle-orm'<%= database === 'postgresql' ? ", 'postgres'" : database === 'sqlite' ? ", 'better-sqlite3'" : database === 'turso' ? ", '@libsql/client'" : '' %>]<% } %>
+          db: ['drizzle-orm'<% if (database === 'postgresql') { %>, 'postgres'<% } else if (database === 'sqlite') { %>, 'better-sqlite3'<% } else if (database === 'turso') { %>, '@libsql/client'<% } %>]<% } %>
         }
       }
     }
