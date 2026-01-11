@@ -2,6 +2,10 @@
  * Claude Code configuration template generation system
  * Terminal 1: PBS Integration & Documentation - Claude Code Templates
  * Constitutional compliance: Complete AI workflow scaffolding
+ *
+ * Task 1.4 Integration: Works with src/generators/mcp.ts for MCP server configuration
+ * - MCP configuration is now externalized to .mcp.json
+ * - This generator creates .claude/settings.json with reference to MCP config
  */
 
 import { promises as fs } from 'fs';
@@ -133,38 +137,40 @@ function generateClaudeCodeSettings(config: ProjectConfig): any {
     }
   };
 
-  // Add MCP servers configuration if enabled
+  // MCP configuration is now externalized to .mcp.json (Task 1.4)
+  // Reference the external configuration file instead of embedding
   if (claudeConfig.mcpRequired && config.mcpServers && config.mcpServers.length > 0) {
-    settings.mcpServers = {};
-
-    config.mcpServers.forEach(serverType => {
-      const serverConfig = MCP_SERVER_CONFIGS[serverType];
-      if (serverConfig) {
-        settings.mcpServers[serverType] = {
-          name: serverConfig.name,
-          description: serverConfig.description,
-          config: { ...serverConfig.config }
-        };
-
-        // Customize server configs based on project
-        if (serverType === 'filesystem') {
-          settings.mcpServers[serverType].config.args = [
-            '-y', '@modelcontextprotocol/server-filesystem',
-            resolve(process.cwd(), config.projectName)
-          ];
-        } else if (serverType === 'postgres' && config.database === 'postgresql') {
-          settings.mcpServers[serverType].config.env = {
-            DATABASE_URL: `postgresql://postgres:postgres@localhost:5432/${config.projectName}`
-          };
-        } else if (serverType === 'github') {
-          settings.mcpServers[serverType].config.env = {
-            GITHUB_PERSONAL_ACCESS_TOKEN: '${GITHUB_TOKEN}',
-            GITHUB_REPO_OWNER: '${GITHUB_OWNER}',
-            GITHUB_REPO_NAME: config.projectName
-          };
-        }
+    settings.mcp = {
+      configFile: '.mcp.json',
+      servers: config.mcpServers,
+      capabilities: {
+        ...(config.mcpServers.includes('github') && {
+          github: {
+            issues: true,
+            pullRequests: true,
+            repository: true
+          }
+        }),
+        ...(config.mcpServers.includes('postgres') && config.database === 'postgresql' && {
+          postgres: {
+            query: true,
+            schema: true
+          }
+        }),
+        ...(config.mcpServers.includes('playwright') && {
+          playwright: {
+            browserAutomation: true,
+            e2eTesting: true
+          }
+        }),
+        ...(config.mcpServers.includes('filesystem') && {
+          filesystem: {
+            read: true,
+            write: true
+          }
+        })
       }
-    });
+    };
   }
 
   // Add hooks configuration if enabled
@@ -877,7 +883,9 @@ ${CLAUDE_CODE_CONFIGS[config.pbsLevel].features.map(f => `- ${f}`).join('\n')}
 
 ## MCP Servers
 ${config.mcpServers && config.mcpServers.length > 0 ?
-  config.mcpServers.map(server => `- **${server}**: ${MCP_SERVER_CONFIGS[server]?.description || 'Custom server'}`).join('\n') :
+  `Configuration: \`.mcp.json\`\n\n` +
+  config.mcpServers.map(server => `- **${server}**: ${MCP_SERVER_CONFIGS[server]?.description || 'Custom server'}`).join('\n') +
+  (config.mcpServers.includes('github') ? '\n\nSee [docs/MCP/GITHUB_MCP.md](../docs/MCP/GITHUB_MCP.md) for GitHub MCP setup instructions.' : '') :
   'No MCP servers configured'
 }
 

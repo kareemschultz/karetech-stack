@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json.schemastore.org/mcp-servers",
+  "mcpServers": {
+<% if (mcpServers.includes('filesystem')) { -%>
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "description": "File system access for project files"
+    }<%= mcpServers.length > 1 && mcpServers.indexOf('filesystem') < mcpServers.length - 1 ? ',' : '' %>
+<% } -%>
+<% if (mcpServers.includes('github')) { -%>
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "description": "GitHub integration for issues, PRs, and repository operations",
+      "capabilities": {
+        "issues": {
+          "create": true,
+          "read": true,
+          "update": true,
+          "close": true,
+          "comment": true,
+          "label": true
+        },
+        "pullRequests": {
+          "create": true,
+          "read": true,
+          "review": true,
+          "merge": true,
+          "comment": true
+        },
+        "repository": {
+          "browse": true,
+          "readFiles": true,
+          "listBranches": true,
+          "commits": true
+        }
+      }
+    }<%= (mcpServers.includes('postgres') || mcpServers.includes('playwright')) ? ',' : '' %>
+<% } -%>
+<% if (mcpServers.includes('postgres') && database === 'postgresql') { -%>
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      },
+      "description": "PostgreSQL database access for schema and query operations"
+    }<%= mcpServers.includes('playwright') ? ',' : '' %>
+<% } -%>
+<% if (mcpServers.includes('playwright') && testing.includes('playwright')) { -%>
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-server-playwright"],
+      "description": "Browser automation for E2E testing with Playwright"
+    }
+<% } -%>
+  }
+}
