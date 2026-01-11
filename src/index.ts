@@ -23,6 +23,7 @@ import { generateTestingFramework } from './generators/testing';
 import { generateDevOpsInfrastructure } from './generators/devops';
 import { generatePBSTemplates } from './generators/pbs';
 import { generateClaudeCodeConfiguration } from './generators/claude-code';
+import { generateMcpConfiguration } from './generators/mcp';
 import { generatePresetSystem } from './generators/presets';
 import { presets, getPreset, getPresetNames, applyPresetToConfig, listPresets } from './presets';
 
@@ -514,6 +515,14 @@ async function createProject(projectName: string | undefined, options: CliOption
     if (completeConfig.pbsLevel !== 'none') {
       const projectDir = resolve(process.cwd(), completeConfig.projectName);
       await generateClaudeCodeConfiguration(projectDir, completeConfig);
+    }
+
+    s.message('Configuring MCP servers...');
+
+    // Task 1.4: Generate MCP server configuration (src/generators/mcp.ts)
+    if (completeConfig.mcpServers && completeConfig.mcpServers.length > 0) {
+      const projectDir = resolve(process.cwd(), completeConfig.projectName);
+      await generateMcpConfiguration(projectDir, completeConfig);
     }
 
     s.message('Setting up preset system and final configuration...');
