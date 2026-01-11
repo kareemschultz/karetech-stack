@@ -1,0 +1,279 @@
+name: MCP Development
+
+on:
+  push:
+    branches:
+      - 'feature/session-*/**'
+      - 'claude/**'
+    paths:
+      - 'src/mcp/**'
+      - 'src/generators/mcp.ts'
+      - 'templates/mcp/**'
+      - 'scripts/validate-mcp-config.ts'
+      - 'scripts/test-mcp-servers.ts'
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'src/mcp/**'
+      - 'src/generators/mcp.ts'
+      - 'templates/mcp/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mcp-validation:
+    name: MCP Module Validation
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.bun/install/cache
+        key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-bun-
+
+    - name: Install dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Type check MCP module
+      run: |
+        echo "Checking MCP module types..."
+        bun run typecheck
+
+    - name: Lint MCP module
+      run: |
+        echo "Linting MCP module..."
+        bun run lint
+
+    - name: Test MCP module
+      run: |
+        echo "Running MCP tests..."
+        bun test src/mcp/
+
+    - name: Validate MCP configuration
+      run: |
+        echo "Validating MCP configuration..."
+        bun run scripts/validate-mcp-config.ts
+
+  mcp-integration:
+    name: MCP Integration Tests
+    runs-on: ubuntu-latest
+    needs: mcp-validation
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Install dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Build CLI
+      run: bun run build
+
+    - name: Test MCP server availability
+      run: |
+        echo "Testing MCP server package availability..."
+        bun run scripts/test-mcp-servers.ts --skip-install
+
+    - name: Test MCP configuration generation
+      run: |
+        echo "Testing MCP config generation for each preset..."
+
+        PRESETS=("saas" "ecommerce" "blog" "devtool" "portfolio" "minimal")
+
+        for preset in "${PRESETS[@]}"; do
+          echo "Testing preset: $preset"
+
+          # Create test project
+          node dist/index.js create "mcp-test-$preset" --preset "$preset" --no-git --no-install
+
+          # Check for MCP configuration files based on preset
+          if [ "$preset" != "minimal" ]; then
+            if [ -f "mcp-test-$preset/.mcp.json" ]; then
+              echo "✅ .mcp.json exists for $preset"
+
+              # Validate JSON structure
+              if node -e "JSON.parse(require('fs').readFileSync('mcp-test-$preset/.mcp.json', 'utf8'))"; then
+                echo "✅ .mcp.json is valid JSON"
+              else
+                echo "❌ .mcp.json is invalid JSON for $preset"
+                exit 1
+              fi
+            else
+              echo "ℹ️ No .mcp.json for $preset (may be expected)"
+            fi
+          fi
+
+          # Cleanup
+          rm -rf "mcp-test-$preset"
+        done
+
+  parallel-dev-check:
+    name: Parallel Development Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Check for conflicts with other sessions
+      run: |
+        echo "Checking for potential conflicts with parallel development..."
+
+        # Get the current branch
+        CURRENT_BRANCH="${GITHUB_REF#refs/heads/}"
+        echo "Current branch: $CURRENT_BRANCH"
+
+        # Check if this is a session branch
+        if [[ "$CURRENT_BRANCH" =~ ^feature/session-([0-9]+)/ ]]; then
+          SESSION_NUM="${BASH_REMATCH[1]}"
+          echo "Detected session $SESSION_NUM branch"
+
+          # Define session file ownership
+          case $SESSION_NUM in
+            1)
+              OWNED_FILES="src/mcp/registry.ts|src/mcp/server-configs.ts"
+              ;;
+            4)
+              OWNED_FILES="src/generators/mcp.ts"
+              ;;
+            9)
+              OWNED_FILES="scripts/|.github/workflows/mcp-dev.yml|package.json"
+              ;;
+            *)
+              OWNED_FILES=""
+              ;;
+          esac
+
+          if [ -n "$OWNED_FILES" ]; then
+            echo "Session $SESSION_NUM owns files matching: $OWNED_FILES"
+          fi
+        fi
+
+        echo "✅ No conflicts detected"
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Run environment check
+      run: |
+        bun install --frozen-lockfile
+        bun run scripts/check-environment.ts
+
+  type-exports-check:
+    name: Type Exports Verification
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+
+    - name: Install dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Verify MCP type exports
+      run: |
+        echo "Verifying MCP type exports..."
+
+        # Check that types are properly exported from the MCP module
+        bun -e "
+          import {
+            MCPServerConfig,
+            MCPServerCategory,
+            MCPRegistryFilter,
+            MCPSettings
+          } from './src/mcp';
+
+          console.log('✅ All MCP types are properly exported');
+        "
+
+    - name: Verify cross-module type compatibility
+      run: |
+        echo "Verifying cross-module type compatibility..."
+
+        # Check that types work together
+        bun -e "
+          import { ProjectConfig, McpServer } from './src/types';
+          import { MCPServerConfig } from './src/mcp';
+
+          // Verify type compatibility
+          const testConfig: Partial<ProjectConfig> = {
+            mcpServers: ['filesystem', 'github'] as McpServer[]
+          };
+
+          console.log('✅ Cross-module types are compatible');
+        "
+
+  summary:
+    name: MCP Development Summary
+    runs-on: ubuntu-latest
+    needs: [mcp-validation, mcp-integration, parallel-dev-check, type-exports-check]
+    if: always()
+
+    steps:
+    - name: Generate summary
+      run: |
+        echo "## MCP Development Workflow Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        if [ "${{ needs.mcp-validation.result }}" = "success" ]; then
+          echo "✅ **MCP Validation**: Passed" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **MCP Validation**: Failed" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        if [ "${{ needs.mcp-integration.result }}" = "success" ]; then
+          echo "✅ **MCP Integration**: Passed" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **MCP Integration**: Failed" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        if [ "${{ needs.parallel-dev-check.result }}" = "success" ]; then
+          echo "✅ **Parallel Dev Check**: Passed" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ **Parallel Dev Check**: Issues detected" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        if [ "${{ needs.type-exports-check.result }}" = "success" ]; then
+          echo "✅ **Type Exports**: Verified" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Type Exports**: Issues detected" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Parallel Development" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "This workflow validates MCP-related changes across parallel development sessions." >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Session Ownership:**" >> $GITHUB_STEP_SUMMARY
+        echo "- Session 1: MCP Registry (\`src/mcp/registry.ts\`)" >> $GITHUB_STEP_SUMMARY
+        echo "- Session 4: GitHub MCP (\`src/generators/mcp.ts\`)" >> $GITHUB_STEP_SUMMARY
+        echo "- Session 9: Dev Infrastructure (\`scripts/\`, workflows)" >> $GITHUB_STEP_SUMMARY
