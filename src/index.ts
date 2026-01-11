@@ -5,7 +5,7 @@
  * Enhanced Better-T-Stack scaffold with PBS, testing, and DevOps built-in
  */
 
-import { intro, outro, text, select, confirm, spinner, isCancel, cancel, multiselect } from '@clack/prompts';
+import { intro, outro, text, select, spinner, isCancel, cancel } from '@clack/prompts';
 import { Command } from 'commander';
 import pc from 'picocolors';
 import { existsSync } from 'fs';
@@ -13,9 +13,9 @@ import { resolve } from 'path';
 import { execSync } from 'child_process';
 
 // Import our enhanced systems
-import { ProjectConfig, CliOptions, DatabaseType, AuthProvider, UiStyle, TestingFramework, CiCdPlatform, PbsLevel } from './types';
+import { ProjectConfig, CliOptions } from './types';
 import { validateProjectName, validateDescription, validateAuthor, validateFullConfig, getValidationContext, generateTrackingRecommendations } from './validation';
-import { exportConfig, importConfig, getDefaultConfigPath, validateConfig as validateConfigData } from './config';
+import { exportConfig, importConfig, getDefaultConfigPath } from './config';
 import { runEnvironmentCheck, printEnvironmentReport } from './utils/environment';
 import { runEnhancedWizard } from './wizard';
 import { generateBaseProject } from './generators/base';
@@ -25,7 +25,7 @@ import { generatePBSTemplates } from './generators/pbs';
 import { generateClaudeCodeConfiguration } from './generators/claude-code';
 import { generateMcpConfiguration } from './generators/mcp';
 import { generatePresetSystem } from './generators/presets';
-import { presets, getPreset, getPresetNames, applyPresetToConfig, listPresets } from './presets';
+import { presets } from './presets';
 
 const VERSION = '0.0.1';
 
@@ -87,16 +87,21 @@ program
   .description('Export current configuration to file')
   .option('--format <format>', 'Export format (json, yaml)', 'json')
   .option('--output <path>', 'Output file path')
-  .action((projectName, options) => {
+  .action((projectName) => {
     console.log(`Config export functionality coming soon for ${projectName}`);
   });
 
 program.parse();
 
 async function createProject(projectName: string | undefined, options: CliOptions) {
-  // Check if running in non-interactive mode (CI or with full preset options)
-  const isNonInteractive = process.env.CI === 'true' ||
-    (options.preset && projectName && (options.noInstall || options.noGit));
+  // Enhanced TTY and non-interactive detection
+  const hasStdoutTty = process.stdout.isTTY || false;
+  const hasStdinTty = process.stdin.isTTY || false;
+  const isCI = process.env.CI === 'true' || process.env.NODE_ENV === 'test';
+  const hasRequiredOptions = options.preset && projectName;
+  
+  const isNonInteractive = isCI || !hasStdoutTty || !hasStdinTty || 
+    (hasRequiredOptions && (options.install === false || options.git === false));
 
   if (!isNonInteractive) {
     console.clear();
@@ -136,6 +141,10 @@ async function createProject(projectName: string | undefined, options: CliOption
   let finalProjectName: string;
   if (projectName) {
     finalProjectName = projectName;
+  } else if (isNonInteractive) {
+    // Non-interactive mode: use default or config value
+    finalProjectName = baseConfig.projectName || 'my-karetech-app';
+    console.log(pc.dim(`Using project name: ${finalProjectName}`));
   } else {
     const namePrompt = await text({
       message: 'What is your project name?',
@@ -155,64 +164,73 @@ async function createProject(projectName: string | undefined, options: CliOption
   config.projectName = finalProjectName;
 
   if (!options.preset) {
-    console.log(pc.dim('\n🚀 Choose a preset to quick-start your project, or customize everything yourself:'));
-
-    // Generate preset options dynamically from preset system
-    const presetOptions = [
-      {
-        value: 'saas',
-        label: '🏢 SaaS Starter',
-        hint: `${presets.saas.database} • Full Auth • Docker • CI/CD • ${presets.saas.pbsLevel?.toUpperCase() || 'FULL'} PBS`
-      },
-      {
-        value: 'ecommerce',
-        label: '🛒 E-commerce',
-        hint: `${presets.ecommerce.database} • Stripe • Full Testing • Complete DevOps`
-      },
-      {
-        value: 'blog',
-        label: '📝 Blog/Publishing',
-        hint: `${presets.blog.database} • Content-optimized • ${presets.blog.deployTarget} Deploy`
-      },
-      {
-        value: 'devtool',
-        label: '🔧 Developer Tool',
-        hint: `${presets.devtool.database} • GitHub Auth • Testing Focus`
-      },
-      {
-        value: 'portfolio',
-        label: '👤 Portfolio',
-        hint: `${presets.portfolio.database} • Minimal • Personal Sites`
-      },
-      {
-        value: 'minimal',
-        label: '⚡ Minimal',
-        hint: `${presets.minimal.database} • Basic Setup • Simple Apps`
-      },
-      {
-        value: 'custom',
-        label: '⚙️  Custom Setup',
-        hint: 'Configure everything step-by-step'
-      }
-    ];
-
-    const preset = await select({
-      message: 'Select a preset:',
-      options: presetOptions,
-    });
-
-    if (isCancel(preset)) {
-      cancel('Operation cancelled');
-      process.exit(0);
-    }
-
-    if (preset !== 'custom') {
-      const selectedPreset = presets[preset as keyof typeof presets];
+    if (isNonInteractive) {
+      // Non-interactive mode: use minimal preset by default
+      const defaultPreset = 'minimal';
+      const selectedPreset = presets[defaultPreset];
       Object.assign(config, selectedPreset);
-      console.log(pc.green(`✓ Applied ${preset} preset`));
+      console.log(pc.dim(`Using default preset: ${defaultPreset}`));
       console.log(pc.dim(`  ${selectedPreset.description}`));
     } else {
-      console.log(pc.dim('  Custom setup selected - you\'ll configure everything step by step'));
+      console.log(pc.dim('\n🚀 Choose a preset to quick-start your project, or customize everything yourself:'));
+
+      // Generate preset options dynamically from preset system
+      const presetOptions = [
+        {
+          value: 'saas',
+          label: '🏢 SaaS Starter',
+          hint: `${presets.saas.database} • Full Auth • Docker • CI/CD • ${presets.saas.pbsLevel?.toUpperCase() || 'FULL'} PBS`
+        },
+        {
+          value: 'ecommerce',
+          label: '🛒 E-commerce',
+          hint: `${presets.ecommerce.database} • Stripe • Full Testing • Complete DevOps`
+        },
+        {
+          value: 'blog',
+          label: '📝 Blog/Publishing',
+          hint: `${presets.blog.database} • Content-optimized • ${presets.blog.deployTarget} Deploy`
+        },
+        {
+          value: 'devtool',
+          label: '🔧 Developer Tool',
+          hint: `${presets.devtool.database} • GitHub Auth • Testing Focus`
+        },
+        {
+          value: 'portfolio',
+          label: '👤 Portfolio',
+          hint: `${presets.portfolio.database} • Minimal • Personal Sites`
+        },
+        {
+          value: 'minimal',
+          label: '⚡ Minimal',
+          hint: `${presets.minimal.database} • Basic Setup • Simple Apps`
+        },
+        {
+          value: 'custom',
+          label: '⚙️  Custom Setup',
+          hint: 'Configure everything step-by-step'
+        }
+      ];
+
+      const preset = await select({
+        message: 'Select a preset:',
+        options: presetOptions,
+      });
+
+      if (isCancel(preset)) {
+        cancel('Operation cancelled');
+        process.exit(0);
+      }
+
+      if (preset !== 'custom') {
+        const selectedPreset = presets[preset as keyof typeof presets];
+        Object.assign(config, selectedPreset);
+        console.log(pc.green(`✓ Applied ${preset} preset`));
+        console.log(pc.dim(`  ${selectedPreset.description}`));
+      } else {
+        console.log(pc.dim('  Custom setup selected - you\'ll configure everything step by step'));
+      }
     }
   }
 
@@ -220,6 +238,12 @@ async function createProject(projectName: string | undefined, options: CliOption
   if (options.preset && config.description) {
     // Use preset description or generate default
     description = config.description || `A ${config.projectName?.replace(/-/g, ' ')} application`;
+  } else if (isNonInteractive) {
+    // Non-interactive mode: use default description
+    description = baseConfig.description || 
+      (config.projectName ? `A ${config.projectName.replace(/-/g, ' ')} application` : 
+       'A modern web application built with Better-T-Stack');
+    console.log(pc.dim(`Using description: ${description}`));
   } else {
     const descPrompt = await text({
       message: 'Project description:',
@@ -250,9 +274,12 @@ async function createProject(projectName: string | undefined, options: CliOption
   if (options.preset && defaultAuthor !== 'Your Name') {
     // Use git config author for preset mode
     author = baseConfig.author || defaultAuthor;
-  } else if (options.preset) {
-    // Use default for preset mode when no git config
-    author = baseConfig.author || 'Your Name';
+  } else if (options.preset || isNonInteractive) {
+    // Use default for preset mode or non-interactive mode when no git config
+    author = baseConfig.author || defaultAuthor;
+    if (isNonInteractive) {
+      console.log(pc.dim(`Using author: ${author}`));
+    }
   } else {
     const authorPrompt = await text({
       message: 'Author name:',
@@ -273,13 +300,17 @@ async function createProject(projectName: string | undefined, options: CliOption
 
   // Use enhanced wizard for configuration
   if (!options.preset || options.preset === 'custom') {
-    console.log(pc.dim('\n🧙‍♂️ Running enhanced configuration wizard...'));
+    if (!isNonInteractive) {
+      console.log(pc.dim('\n🧙‍♂️ Running enhanced configuration wizard...'));
 
-    // Run the enhanced wizard with all smart features
-    const wizardConfig = await runEnhancedWizard(config, options.preset);
+      // Run the enhanced wizard with all smart features
+      const wizardConfig = await runEnhancedWizard(config, options.preset, { isNonInteractive: !!isNonInteractive });
 
-    // Merge wizard results into config
-    Object.assign(config, wizardConfig);
+      // Merge wizard results into config
+      Object.assign(config, wizardConfig);
+    } else {
+      console.log(pc.dim('\n🧙‍♂️ Skipping wizard in non-interactive mode, using defaults...'));
+    }
   }
 
   // Validate complete configuration
@@ -406,7 +437,7 @@ async function createProject(projectName: string | undefined, options: CliOption
 
     s.message('Finalizing project setup...');
 
-    // Optional: Run post-generation steps
+    // Optional: Run post-generation steps  
     if (options.git !== false) {
       try {
         const projectDir = resolve(process.cwd(), completeConfig.projectName);

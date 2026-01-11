@@ -36,10 +36,10 @@ export const minimalPreset: PresetConfig = {
   deployTarget: 'vercel',
 
   // AI Workflow
-  pbsLevel: 'docs',
+  pbsLevel: 'none',
   beadsIntegration: false,
-  claudeCodeHooks: true,
-  mcpServers: ['filesystem'],
+  claudeCodeHooks: false,
+  mcpServers: [],
 
   // Extras
   pwa: false,

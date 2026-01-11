@@ -5,6 +5,8 @@
 
 import { text, select, confirm, multiselect, isCancel, cancel } from '@clack/prompts';
 import pc from 'picocolors';
+
+// Safe helper functions removed - were unused
 import { ProjectConfig, DatabaseType, AuthProvider, UiStyle, TestingFramework, CiCdPlatform, PbsLevel, AccentColor, BaseColor, FontFamily, IconLibrary, BorderRadius, DeployTarget, AnalyticsProvider, EmailProvider, ErrorTrackingProvider, McpServer, ComponentLibrary, MenuAccent } from '../types';
 import { validateProjectNamePrompt, validateDescriptionPrompt, validateAuthorPrompt } from '../validation';
 import { detectGitHubRepository, displayGitHubDetection, autoConfigureGitHubMCP } from '../generators/github-detection';
@@ -27,6 +29,7 @@ export interface WizardContext {
   skipOptional: boolean;
   currentStep: number;
   totalSteps: number;
+  isNonInteractive: boolean;
 }
 
 /**
@@ -685,7 +688,7 @@ export async function aiWorkflowStep(context: WizardContext): Promise<Partial<Pr
     const availableServers = registry.getAll();
 
     // Build options from available servers
-    const mcpOptions = availableServers.map((server: any) => ({
+    const mcpOptions: Array<{ value: string; label: string; hint: string; }> = availableServers.map((server: any) => ({
       value: server.id,
       label: server.name,
       hint: server.description
@@ -737,7 +740,7 @@ export async function aiWorkflowStep(context: WizardContext): Promise<Partial<Pr
           const additionalServers = await multiselect({
             message: 'Select additional MCP servers:',
             options: remainingOptions,
-            initialValues: [],
+            initialValues: [] as string[],
             required: false,
           });
 
@@ -913,14 +916,16 @@ export async function extrasStep(context: WizardContext): Promise<Partial<Projec
  */
 export async function runEnhancedWizard(
   initialConfig: Partial<ProjectConfig> = {},
-  preset?: string
+  preset?: string,
+  options: { isNonInteractive?: boolean } = {}
 ): Promise<ProjectConfig> {
   const context: WizardContext = {
     config: { ...initialConfig },
     preset,
     skipOptional: preset !== undefined && preset !== 'custom',
     currentStep: 1,
-    totalSteps: WIZARD_STEPS.length
+    totalSteps: WIZARD_STEPS.length,
+    isNonInteractive: options.isNonInteractive || false
   };
 
   // Filter steps based on conditions

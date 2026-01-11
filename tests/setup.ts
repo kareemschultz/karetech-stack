@@ -4,6 +4,8 @@
  * Supports all preset validation, performance testing, and dev server testing
  */
 
+import './test-setup'; // Apply test-specific setup and mocking
+
 import { execSync, spawn } from 'child_process';
 import { existsSync, rmSync, mkdirSync, readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { resolve, join, basename } from 'path';
@@ -830,7 +832,7 @@ export function createTestConfig(overrides: any = {}): any {
  * Performance testing utilities
  */
 export class PerformanceTest {
-  private startTime: number = 0;
+  private startTime: bigint = 0n;
   private metrics: Array<{ name: string; duration: number; memory?: number }> = [];
 
   start(name: string): void {

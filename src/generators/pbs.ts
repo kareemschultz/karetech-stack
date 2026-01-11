@@ -5,10 +5,10 @@
  */
 
 import { promises as fs } from 'fs';
-import { join, resolve } from 'path';
+import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
-import * as ejs from 'ejs';
-import { ProjectConfig, TemplateContext, PbsLevel } from '../types';
+// ejs import removed - was unused
+import { ProjectConfig } from '../types';
 
 /**
  * PBS template configurations based on integration level

@@ -5,8 +5,7 @@
  */
 
 import { execSync } from 'child_process';
-import { existsSync } from 'fs';
-import { join } from 'path';
+// existsSync and join imports removed - were unused
 import { ProjectConfig } from '../types';
 import { serverById } from './server-configs';
 import { MCPRegistry } from './registry';
@@ -174,7 +173,7 @@ export class MCPAutoInstaller {
     }
 
     // GitHub integration if using GitHub Actions or if git repo detected
-    if (config.deployment?.includes('github') || this.isGitHubRepo(config)) {
+    if (config.cicd === 'github-actions' || this.isGitHubRepo(config)) {
       servers.push('github');
     }
 
@@ -194,7 +193,7 @@ export class MCPAutoInstaller {
   /**
    * Check if this is a GitHub repository
    */
-  private isGitHubRepo(config: ProjectConfig): boolean {
+  private isGitHubRepo(_config: ProjectConfig): boolean {
     // Check git remote for github.com
     try {
       const remote = execSync('git remote get-url origin 2>/dev/null', {
@@ -249,8 +248,8 @@ export class MCPAutoInstaller {
 
     try {
       // Check if the package is available globally
-      if (serverConfig.package) {
-        execSync(`npm list -g ${serverConfig.package} 2>/dev/null`, { stdio: 'ignore' });
+      if (serverConfig.packageName) {
+        execSync(`npm list -g ${serverConfig.packageName} 2>/dev/null`, { stdio: 'ignore' });
         return true;
       }
 

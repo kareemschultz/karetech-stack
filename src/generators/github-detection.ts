@@ -5,7 +5,7 @@
  */
 
 import { execSync } from 'child_process';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync } from 'fs';
 import { join } from 'path';
 import { ProjectConfig } from '../types';
 import pc from 'picocolors';
@@ -235,7 +235,7 @@ export class GitHubDetector {
   /**
    * Get recommended MCP servers based on repository info
    */
-  private getRecommendedMCPServers(repoInfo: GitHubRepoInfo, config?: ProjectConfig): string[] {
+  private getRecommendedMCPServers(_repoInfo: GitHubRepoInfo, config?: ProjectConfig): string[] {
     const servers: string[] = [];
 
     // Always recommend GitHub MCP for GitHub repos
@@ -259,7 +259,7 @@ export class GitHubDetector {
   /**
    * Get suggested integrations
    */
-  private getSuggestedIntegrations(repoInfo: GitHubRepoInfo, config?: ProjectConfig): GitHubIntegration[] {
+  private getSuggestedIntegrations(repoInfo: GitHubRepoInfo, _config?: ProjectConfig): GitHubIntegration[] {
     const integrations: GitHubIntegration[] = [];
 
     // GitHub MCP integration
@@ -305,7 +305,7 @@ export class GitHubDetector {
   /**
    * Get warnings about potential issues
    */
-  private getWarnings(repoInfo: GitHubRepoInfo, config?: ProjectConfig): string[] {
+  private getWarnings(repoInfo: GitHubRepoInfo, _config?: ProjectConfig): string[] {
     const warnings: string[] = [];
 
     // Check for potential authentication issues
@@ -371,7 +371,7 @@ export class GitHubDetector {
   /**
    * Validate repository access
    */
-  async validateRepositoryAccess(repoInfo: GitHubRepoInfo): Promise<{
+  async validateRepositoryAccess(_repoInfo: GitHubRepoInfo): Promise<{
     accessible: boolean;
     permissions?: string[];
     error?: string;

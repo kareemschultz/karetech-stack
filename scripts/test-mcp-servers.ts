@@ -6,7 +6,7 @@
 
 import { execSync, spawn, ChildProcess } from 'child_process';
 import { existsSync, mkdirSync, rmSync } from 'fs';
-import { join } from 'path';
+// join import removed - was unused
 
 interface ServerTestResult {
   name: string;
@@ -65,7 +65,7 @@ async function testPackageInstall(packageName: string, options: TestOptions): Pr
     return true;
   }
 
-  const startTime = Date.now();
+  // startTime tracking removed - was unused
   try {
     // Try to fetch package info to verify it exists
     execSync(`npm view ${packageName} version`, {
@@ -82,7 +82,7 @@ async function testPackageInstall(packageName: string, options: TestOptions): Pr
 async function testServerStart(
   command: string,
   args: string[],
-  options: TestOptions
+  _options: TestOptions
 ): Promise<{ success: boolean; error?: string }> {
   return new Promise((resolve) => {
     let resolved = false;
@@ -106,7 +106,7 @@ async function testServerStart(
         env: { ...process.env }
       });
 
-      serverProcess.on('error', (error) => {
+      serverProcess.on('error', (error: Error) => {
         if (!resolved) {
           resolved = true;
           clearTimeout(timeoutId);
@@ -114,7 +114,7 @@ async function testServerStart(
         }
       });
 
-      serverProcess.on('exit', (code) => {
+      serverProcess.on('exit', (code: number | null) => {
         if (!resolved && code !== 0) {
           resolved = true;
           clearTimeout(timeoutId);
@@ -124,7 +124,7 @@ async function testServerStart(
 
       // Check stderr for startup errors
       let stderrOutput = '';
-      serverProcess.stderr?.on('data', (data) => {
+      serverProcess.stderr?.on('data', (data: Buffer) => {
         stderrOutput += data.toString();
         if (stderrOutput.includes('Error') || stderrOutput.includes('error')) {
           if (!resolved) {

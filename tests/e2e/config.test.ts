@@ -233,7 +233,6 @@ describe('Configuration Management', () => {
     test('should validate required environment tools', () => {
       const result = execSync(`node ${CLI_PATH} check-env`, {
         encoding: 'utf8',
-        cwd: TEST_WORKSPACE,
         timeout: 10000
       });
 
@@ -244,7 +243,6 @@ describe('Configuration Management', () => {
     test('should provide actionable environment feedback', () => {
       const result = execSync(`node ${CLI_PATH} check-env`, {
         encoding: 'utf8',
-        cwd: TEST_WORKSPACE,
         timeout: 10000
       });
 

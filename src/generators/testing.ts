@@ -4,10 +4,10 @@
  */
 
 import { promises as fs } from 'fs';
-import { join, resolve } from 'path';
+import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
-import { ProjectConfig, TemplateContext, TestingFramework } from '../types';
-import { copyTemplateDirectory, processTemplate } from './base';
+import { ProjectConfig } from '../types';
+// copyTemplateDirectory, processTemplate imports removed - were unused
 
 /**
  * Playwright configuration generator
@@ -108,7 +108,7 @@ export default defineConfig({
 /**
  * Vitest configuration generator
  */
-export async function generateVitestConfig(projectDir: string, config: ProjectConfig): Promise<void> {
+export async function generateVitestConfig(projectDir: string, _config: ProjectConfig): Promise<void> {
   const vitestConfig = `import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
@@ -608,7 +608,7 @@ jobs:
  * Main testing framework generator
  */
 export async function generateTestingFramework(projectDir: string, config: ProjectConfig): Promise<void> {
-  const context = { ...config } as TemplateContext;
+  // Context creation removed - was unused
 
   // Generate configurations for selected testing frameworks
   if (config.testing.includes('playwright')) {

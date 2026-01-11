@@ -223,6 +223,8 @@ describe('Preset System', () => {
         font: 'inter',
         icons: 'lucide',
         borderRadius: '0.5',
+        componentLibrary: 'base-ui',
+        menuAccent: 'subtle',
         testing: [],
         unitTesting: false,
         exampleTests: false,

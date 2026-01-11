@@ -11,10 +11,8 @@
 import { promises as fs } from 'fs';
 import { join, resolve } from 'path';
 import { existsSync, mkdirSync } from 'fs';
-import { ProjectConfig, McpServer } from '../types';
+import { ProjectConfig } from '../types';
 import {
-  getDatabaseMcpConfig,
-  generateMcpServerConfig,
   DATABASE_MCP_REGISTRY
 } from '../mcp/database-integration';
 import { generateDatabaseMcpConfig } from './database-mcp';

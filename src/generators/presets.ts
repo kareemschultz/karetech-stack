@@ -4,11 +4,11 @@
  */
 
 import { promises as fs } from 'fs';
-import { join, resolve, dirname } from 'path';
+import { join, dirname } from 'path';
 import { existsSync, mkdirSync } from 'fs';
-import * as ejs from 'ejs';
+// ejs import removed - was unused
 import { ProjectConfig, PresetConfig } from '../types';
-import { presets, getPreset, validatePresetName, applyPresetToConfig } from '../presets';
+import { presets, getPreset, validatePresetName } from '../presets';
 
 /**
  * Preset validation errors
@@ -447,6 +447,9 @@ export async function generatePresetSchema(outputPath: string): Promise<void> {
  * Main preset generation function
  */
 export async function generatePresetSystem(projectDir: string, config: ProjectConfig): Promise<void> {
+  // Import validation functions
+  const { validateFullConfig, getValidationContext } = await import('../validation');
+  
   // Validate the preset if one was specified
   if (config.preset && validatePresetName(config.preset)) {
     const preset = getPreset(config.preset);
@@ -460,6 +463,15 @@ export async function generatePresetSystem(projectDir: string, config: ProjectCo
 
       console.log(`✓ Applied ${config.preset} preset successfully`);
     }
+  }
+
+  // Validate the complete configuration
+  const validationContext = getValidationContext();
+  const configValidation = validateFullConfig(config, validationContext);
+  const configErrors = configValidation.filter(v => v.severity === 'error');
+
+  if (configErrors.length > 0) {
+    throw new Error(`Preset validation failed: ${configErrors.map(e => e.message).join(', ')}`);
   }
 
   // Generate preset documentation if PBS level is appropriate

@@ -4,9 +4,9 @@
  */
 
 import { promises as fs } from 'fs';
-import { join, resolve } from 'path';
+import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
-import { ProjectConfig, TemplateContext } from '../types';
+import { ProjectConfig } from '../types';
 
 /**
  * Generate Dockerfile for production deployment

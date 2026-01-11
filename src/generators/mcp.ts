@@ -9,9 +9,9 @@
  */
 
 import { promises as fs } from 'fs';
-import { join, resolve } from 'path';
+import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
-import * as ejs from 'ejs';
+// ejs import removed - was unused
 import { ProjectConfig, McpServer } from '../types';
 
 /**
@@ -186,7 +186,7 @@ export async function detectGitHubRepository(projectDir: string): Promise<GitHub
  * Generate GitHub MCP server configuration with auto-detected repo info
  */
 export function generateGitHubMcpConfig(
-  config: ProjectConfig,
+  _config: ProjectConfig,
   repoInfo: GitHubRepoInfo | null
 ): McpServerConfig {
   const baseConfig = { ...MCP_SERVER_DEFAULTS.github };
