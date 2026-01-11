@@ -1,0 +1,47 @@
+<%#
+  PostgreSQL MCP Server Configuration Template
+  Package: @modelcontextprotocol/server-postgres
+  Official MCP server providing read-only PostgreSQL access
+-%>
+{
+  "$schema": "https://json.schemastore.org/mcp-config.json",
+  "name": "postgres",
+  "displayName": "PostgreSQL MCP Server",
+  "description": "Read-only access to PostgreSQL databases for schema inspection and query execution",
+  "databaseType": "postgresql",
+  "package": {
+    "name": "@modelcontextprotocol/server-postgres",
+    "version": "0.6.2",
+    "official": true,
+    "repository": "https://github.com/modelcontextprotocol/servers"
+  },
+  "configuration": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-postgres",
+      "${DATABASE_URL}"
+    ],
+    "env": {
+      "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/<%= projectName %>"
+    }
+  },
+  "capabilities": [
+    "Schema inspection (tables, columns, types)",
+    "Read-only SQL query execution",
+    "Automatic schema discovery from metadata",
+    "Database structure analysis"
+  ],
+  "securityNotes": [
+    "Provides read-only access only - cannot modify data",
+    "Uses read-only transactions for protected execution",
+    "Store credentials in environment variables, never in code",
+    "Consider using connection pooling for production"
+  ],
+  "readOnly": true,
+  "projectConfig": {
+    "projectName": "<%= projectName %>",
+    "author": "<%= author %>",
+    "database": "<%= database %>"
+  }
+}

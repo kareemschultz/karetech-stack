@@ -1,0 +1,23 @@
+<%#
+  Database MCP Configuration Index Template
+  Generates the appropriate database MCP config based on project settings
+
+  Usage:
+    This template is used by the generator to create database-specific
+    MCP configurations. It switches based on the `database` variable.
+
+  Variables:
+    - projectName: string - The project name
+    - author: string - The project author
+    - database: 'postgresql' | 'sqlite' | 'turso' | 'none'
+    - mcpServers: string[] - Selected MCP servers
+-%>
+<% if (database === 'none') { %>
+<%# No database selected - skip MCP configuration %>
+<% } else if (database === 'postgresql') { %>
+<%- include('./postgres-config.json.ejs', { projectName, author, database }) %>
+<% } else if (database === 'sqlite') { %>
+<%- include('./sqlite-config.json.ejs', { projectName, author, database }) %>
+<% } else if (database === 'turso') { %>
+<%- include('./turso-config.json.ejs', { projectName, author, database }) %>
+<% } %>

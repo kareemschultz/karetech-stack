@@ -96,7 +96,8 @@ export type DeployTarget = 'vercel' | 'netlify' | 'docker' | 'manual';
 export type PbsLevel = 'full' | 'docs' | 'minimal' | 'none';
 
 // MCP servers
-export type McpServer = 'filesystem' | 'github' | 'postgres' | 'playwright';
+// Note: 'postgres' is used for PostgreSQL, 'sqlite' and 'turso' added for database MCP support
+export type McpServer = 'filesystem' | 'github' | 'postgres' | 'sqlite' | 'turso' | 'playwright';
 
 // Analytics providers
 export type AnalyticsProvider = 'vercel' | 'google' | 'umami' | 'none';
