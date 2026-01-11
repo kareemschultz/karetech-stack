@@ -388,6 +388,8 @@ export async function generateBaseProject(config: ProjectConfig): Promise<void> 
  */
 export function validateTemplateStructure(templatesDir: string): string[] {
   const errors: string[] = [];
+
+  // Required directories for core functionality
   const requiredDirs = [
     'base',
     'themes/default',
@@ -399,16 +401,36 @@ export function validateTemplateStructure(templatesDir: string): string[] {
     'database/postgresql',
     'database/turso',
     'database/sqlite',
-    'auth/email',
-    'auth/oauth',
-    'auth/github',
-    'auth/magic-links'
+    'auth',
+    'testing/playwright',
+    'testing/vitest',
+    'testing/puppeteer',
+    'devops/docker',
+    'devops/github',
+    'mcp',
+    'mcp/servers',
+    'pbs'
   ];
 
   for (const dir of requiredDirs) {
     const fullPath = join(templatesDir, dir);
     if (!existsSync(fullPath)) {
       errors.push(`Missing required template directory: ${dir}`);
+    }
+  }
+
+  // Validate required template files exist
+  const requiredFiles = [
+    'base/package.json.ejs',
+    'base/tsconfig.json.ejs',
+    'base/vite.config.ts.ejs',
+    'mcp/settings.json.ejs'
+  ];
+
+  for (const file of requiredFiles) {
+    const fullPath = join(templatesDir, file);
+    if (!existsSync(fullPath)) {
+      errors.push(`Missing required template file: ${file}`);
     }
   }
 

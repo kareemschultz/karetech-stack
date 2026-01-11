@@ -1,0 +1,129 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/schemas/settings.json",
+  "version": "1.0.0",
+  "projectName": "<%= projectName %>",
+  "description": "<%= description %>",
+
+  "mcpServers": {
+<% if (mcpServers && mcpServers.includes('filesystem')) { %>
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "./"
+      ],
+      "env": {},
+      "disabled": false,
+      "autoApprove": ["read_file", "list_directory"]
+    }<%= (mcpServers.includes('github') || mcpServers.includes('postgres') || mcpServers.includes('playwright')) ? ',' : '' %>
+<% } %>
+<% if (mcpServers && mcpServers.includes('github')) { %>
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "disabled": false,
+      "autoApprove": ["get_issue", "list_issues", "search_code"]
+    }<%= (mcpServers.includes('postgres') || mcpServers.includes('playwright')) ? ',' : '' %>
+<% } %>
+<% if (mcpServers && mcpServers.includes('postgres') && database === 'postgresql') { %>
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres"
+      ],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      },
+      "disabled": false,
+      "autoApprove": ["query", "describe_table"]
+    }<%= mcpServers.includes('playwright') ? ',' : '' %>
+<% } %>
+<% if (mcpServers && mcpServers.includes('playwright') && testing.includes('playwright')) { %>
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-playwright"
+      ],
+      "env": {
+        "PLAYWRIGHT_BROWSER": "chromium"
+      },
+      "disabled": false,
+      "autoApprove": ["navigate", "screenshot"]
+    }
+<% } %>
+  },
+
+  "aiWorkflow": {
+    "level": "<%= pbsLevel %>",
+    "beadsIntegration": <%= beadsIntegration %>,
+    "claudeCodeHooks": <%= claudeCodeHooks %>
+  },
+
+  "project": {
+    "techStack": {
+      "runtime": "bun",
+      "framework": "better-t-stack",
+      "database": "<%= database %>",
+      "auth": [<%= auth.map(a => `"${a}"`).join(', ') %>],
+      "testing": [<%= testing.map(t => `"${t}"`).join(', ') %>],
+      "deployment": "<%= deployTarget %>"
+    },
+    "uiConfig": {
+      "style": "<%= uiStyle %>",
+      "baseColor": "<%= baseColor %>",
+      "accentColor": "<%= accentColor %>",
+      "componentLibrary": "<%= componentLibrary %>"
+    }
+  },
+
+  "constitution": {
+    "strictTypeScript": true,
+    "noAnyTypes": true,
+    "testingRequired": <%= unitTesting || testing.length > 0 %>,
+    "documentationRequired": <%= pbsLevel !== 'none' %>
+  },
+
+  "permissions": {
+    "fileOperations": {
+      "read": ["**/*"],
+      "write": ["src/**/*", "tests/**/*", "docs/**/*"],
+      "create": ["src/**/*", "tests/**/*"],
+      "delete": ["src/**/*.generated.*"]
+    },
+    "networkOperations": {
+      "allowedDomains": [
+        "localhost",
+        "*.vercel.app",
+        "*.netlify.app",
+        "github.com",
+        "api.github.com"
+      ]
+    },
+    "bashCommands": {
+      "allowed": [
+        "bun",
+        "npm",
+        "git",
+        "docker",
+<% if (testing.includes('playwright')) { %>
+        "playwright",
+<% } %>
+        "drizzle-kit"
+      ],
+      "blocked": [
+        "rm -rf /",
+        "sudo",
+        "chmod 777"
+      ]
+    }
+  }
+}

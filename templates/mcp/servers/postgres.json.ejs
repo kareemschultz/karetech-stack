@@ -1,0 +1,63 @@
+{
+  "name": "postgres",
+  "displayName": "PostgreSQL Server",
+  "description": "Provides PostgreSQL database access for queries and schema management",
+  "package": "@modelcontextprotocol/server-postgres",
+  "version": "^1.0.0",
+
+  "command": "npx",
+  "args": [
+    "-y",
+    "@modelcontextprotocol/server-postgres"
+  ],
+  "env": {
+    "DATABASE_URL": "${DATABASE_URL}"
+  },
+
+  "requiredEnv": [
+    "DATABASE_URL"
+  ],
+
+  "capabilities": [
+    "query",
+    "execute",
+    "describe_table",
+    "list_tables",
+    "list_schemas",
+    "get_table_info",
+    "explain_query"
+  ],
+
+  "autoApprove": [
+    "query",
+    "describe_table",
+    "list_tables",
+    "list_schemas",
+    "get_table_info",
+    "explain_query"
+  ],
+
+  "requiresApproval": [
+    "execute"
+  ],
+
+  "restrictions": {
+    "maxQueryTime": 30000,
+    "maxRows": 1000,
+    "readOnlyMode": false,
+    "allowedSchemas": ["public"],
+    "blockedOperations": [
+      "DROP DATABASE",
+      "DROP SCHEMA",
+      "TRUNCATE",
+      "DROP TABLE"
+    ]
+  },
+
+  "healthCheck": {
+    "query": "SELECT 1",
+    "expectedResult": 1
+  },
+
+  "projectDatabase": "<%= projectName %>"
+}

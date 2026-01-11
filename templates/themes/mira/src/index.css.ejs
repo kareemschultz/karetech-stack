@@ -1,0 +1,354 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+<% if (font === 'figtree') { %>
+@import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap');
+<% } else if (font === 'geist') { %>
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap');
+<% } else if (font === 'inter') { %>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+<% } %>
+
+@layer base {
+  :root {
+    /* Mira theme: Minimal, focused design with high contrast */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+
+    /* Minimal, clean muted colors */
+    --muted: <%= baseColor === 'slate' ? '210 40% 96.1%' :
+               baseColor === 'gray' ? '0 0% 96.1%' :
+               baseColor === 'zinc' ? '240 4.8% 95.9%' :
+               baseColor === 'neutral' ? '0 0% 96.1%' :
+               baseColor === 'stone' ? '60 4.8% 95.9%' :
+               '0 0% 96.1%' %>;
+    --muted-foreground: <%= baseColor === 'slate' ? '215.4 16.3% 46.9%' :
+                           baseColor === 'gray' ? '0 0% 45.1%' :
+                           baseColor === 'zinc' ? '240 3.8% 46.1%' :
+                           baseColor === 'neutral' ? '0 0% 45.1%' :
+                           baseColor === 'stone' ? '25 5.3% 44.7%' :
+                           '0 0% 45.1%' %>;
+
+    /* High-contrast primary colors for focus */
+    --primary: <%= accentColor === 'blue' ? '221.2 83.2% 53.3%' :
+                 accentColor === 'green' ? '142.1 76.2% 36.3%' :
+                 accentColor === 'purple' ? '262.1 83.3% 57.8%' :
+                 accentColor === 'red' ? '0 72.2% 50.6%' :
+                 accentColor === 'orange' ? '24.6 95% 53.1%' :
+                 accentColor === 'yellow' ? '47.9 95.8% 53.1%' :
+                 accentColor === 'pink' ? '330.4 81.2% 60.4%' :
+                 accentColor === 'violet' ? '262.1 83.3% 57.8%' :
+                 '0 0% 9%' %>;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Minimal, hairline borders */
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: <%= accentColor === 'blue' ? '221.2 83.2% 53.3%' :
+              accentColor === 'green' ? '142.1 76.2% 36.3%' :
+              accentColor === 'purple' ? '262.1 83.3% 57.8%' :
+              accentColor === 'red' ? '0 72.2% 50.6%' :
+              accentColor === 'orange' ? '24.6 95% 53.1%' :
+              accentColor === 'yellow' ? '47.9 95.8% 53.1%' :
+              accentColor === 'pink' ? '330.4 81.2% 60.4%' :
+              accentColor === 'violet' ? '262.1 83.3% 57.8%' :
+              '0 0% 9%' %>;
+
+    /* Mira-specific zero radius for sharp edges */
+    --radius: <%= borderRadius === 'default' ? '0' : borderRadius %>rem;
+
+    /* Minimal chart colors */
+    --chart-1: 0 0% 20%;
+    --chart-2: 0 0% 35%;
+    --chart-3: 0 0% 50%;
+    --chart-4: 0 0% 65%;
+    --chart-5: 0 0% 80%;
+  }
+
+  .dark {
+    /* Mira dark mode: Pure black with high contrast */
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+
+    --primary: <%= accentColor === 'blue' ? '217.2 91.2% 59.8%' :
+                 accentColor === 'green' ? '142.1 70.6% 45.3%' :
+                 accentColor === 'purple' ? '263.4 70% 50.4%' :
+                 accentColor === 'red' ? '0 72.2% 50.6%' :
+                 accentColor === 'orange' ? '20.5 90.2% 48.2%' :
+                 accentColor === 'yellow' ? '47.9 95.8% 53.1%' :
+                 accentColor === 'pink' ? '330.4 81.2% 60.4%' :
+                 accentColor === 'violet' ? '263.4 70% 50.4%' :
+                 '0 0% 98%' %>;
+    --primary-foreground: 0 0% 9%;
+
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: <%= accentColor === 'blue' ? '217.2 91.2% 59.8%' :
+              accentColor === 'green' ? '142.1 70.6% 45.3%' :
+              accentColor === 'purple' ? '263.4 70% 50.4%' :
+              accentColor === 'red' ? '0 72.2% 50.6%' :
+              accentColor === 'orange' ? '20.5 90.2% 48.2%' :
+              accentColor === 'yellow' ? '47.9 95.8% 53.1%' :
+              accentColor === 'pink' ? '330.4 81.2% 60.4%' :
+              accentColor === 'violet' ? '263.4 70% 50.4%' :
+              '0 0% 98%' %>;
+
+    --chart-1: 0 0% 98%;
+    --chart-2: 0 0% 85%;
+    --chart-3: 0 0% 70%;
+    --chart-4: 0 0% 55%;
+    --chart-5: 0 0% 40%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    <% if (font === 'figtree') { %>
+    font-family: 'Figtree', system-ui, sans-serif;
+    font-feature-settings: 'cv03', 'cv04', 'cv11';
+    <% } else if (font === 'inter') { %>
+    font-family: 'Inter', system-ui, sans-serif;
+    <% } else if (font === 'geist') { %>
+    font-family: 'Geist', system-ui, sans-serif;
+    <% } else if (font === 'crimson') { %>
+    font-family: 'Crimson Pro', Georgia, serif;
+    <% } else if (font === 'mono') { %>
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    <% } %>
+  }
+
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+}
+
+/* Mira theme: Minimal, focused component styles */
+@layer components {
+  /* Minimal, flat buttons */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:opacity-90
+           px-4 py-2 font-medium transition-opacity duration-150 border-0;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-foreground hover:bg-muted
+           px-4 py-2 font-medium transition-colors duration-150
+           border border-border;
+  }
+
+  .btn-outline {
+    @apply border border-foreground text-foreground hover:bg-foreground hover:text-background
+           px-4 py-2 font-medium transition-colors duration-150;
+  }
+
+  /* Minimal card styling - almost borderless */
+  .card {
+    @apply bg-card text-card-foreground border border-border/40
+           p-6;
+  }
+
+  .card-header {
+    @apply pb-2 space-y-1;
+  }
+
+  .card-title {
+    @apply text-lg font-semibold leading-none tracking-tight;
+  }
+
+  .card-description {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .card-content {
+    @apply pt-0;
+  }
+
+  .card-footer {
+    @apply flex items-center pt-4;
+  }
+
+  /* Minimal menu styling */
+  <% if (menuAccent === 'subtle') { %>
+  .menu-item {
+    @apply px-3 py-2 text-sm font-medium transition-colors duration-100
+           hover:bg-muted hover:text-foreground
+           focus:bg-muted focus:text-foreground focus:outline-none;
+  }
+
+  .menu-item-active {
+    @apply bg-muted text-foreground;
+  }
+  <% } else { %>
+  .menu-item {
+    @apply px-3 py-2 text-sm font-medium transition-colors duration-100
+           hover:text-primary
+           focus:text-primary focus:outline-none;
+  }
+
+  .menu-item-active {
+    @apply text-primary;
+  }
+  <% } %>
+
+  /* Minimal input styling */
+  .input {
+    @apply flex h-10 w-full border-b border-input bg-transparent px-0 py-2
+           text-sm ring-offset-background transition-colors duration-150
+           file:border-0 file:bg-transparent file:text-sm file:font-medium
+           placeholder:text-muted-foreground
+           focus-visible:outline-none focus-visible:border-foreground
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .select-trigger {
+    @apply flex h-10 w-full items-center justify-between border-b border-input
+           bg-transparent px-0 py-2 text-sm ring-offset-background
+           placeholder:text-muted-foreground
+           focus:outline-none focus:border-foreground
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .form-item {
+    @apply space-y-2;
+  }
+
+  .form-label {
+    @apply text-xs font-medium uppercase tracking-wider text-muted-foreground
+           peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
+  }
+
+  .form-description {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .form-message {
+    @apply text-sm font-medium text-destructive;
+  }
+}
+
+/* Mira utilities for minimal design */
+@layer utilities {
+  .border-minimal {
+    @apply border-b border-border;
+  }
+
+  .divider-minimal {
+    @apply border-t border-border/50;
+  }
+
+  /* Text utilities for minimal design */
+  .text-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+
+  .uppercase-spaced {
+    @apply uppercase tracking-wider text-xs;
+  }
+
+  /* Minimal focus ring */
+  .focus-minimal {
+    @apply focus:outline-none focus:border-foreground;
+  }
+}
+
+<% if (componentLibrary === 'base-ui') { %>
+/* Base UI enhancements for Mira theme */
+@layer components {
+  [data-ui="Button"] {
+    @apply transition-opacity duration-150;
+    border-radius: 0;
+  }
+
+  [data-ui="Button"][data-variant="outline"] {
+    @apply border border-foreground;
+  }
+
+  [data-ui="Field.Root"] {
+    @apply space-y-2;
+  }
+
+  [data-ui="Field.Control"] {
+    border-radius: 0;
+    @apply border-b border-border bg-transparent px-0;
+  }
+
+  [data-ui="Field.Label"] {
+    @apply text-xs font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  [data-ui="Select.Trigger"] {
+    border-radius: 0;
+    @apply border-b border-border bg-transparent px-0;
+  }
+
+  [data-ui="Select.Content"] {
+    border-radius: 0;
+    @apply border border-border;
+  }
+
+  [data-ui="Dialog.Content"] {
+    border-radius: 0;
+    @apply border border-border;
+  }
+
+  [data-ui="Popover.Content"] {
+    border-radius: 0;
+    @apply border border-border;
+  }
+}
+<% } %>
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  .card {
+    @apply border border-gray-400;
+    break-inside: avoid;
+  }
+}

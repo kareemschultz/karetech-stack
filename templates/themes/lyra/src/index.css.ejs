@@ -1,0 +1,376 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+<% if (font === 'figtree') { %>
+@import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap');
+<% } else if (font === 'crimson') { %>
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+<% } else if (font === 'inter') { %>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+<% } %>
+
+@layer base {
+  :root {
+    /* Lyra theme: Editorial, refined design with elegant typography */
+    --background: 0 0% 100%;
+    --foreground: 20 14.3% 4.1%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 14.3% 4.1%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14.3% 4.1%;
+
+    /* Warm, refined muted colors */
+    --muted: <%= baseColor === 'slate' ? '210 40% 96.1%' :
+               baseColor === 'gray' ? '220 14.3% 95.9%' :
+               baseColor === 'zinc' ? '240 4.8% 95.9%' :
+               baseColor === 'neutral' ? '0 0% 96.1%' :
+               baseColor === 'stone' ? '60 9% 97.8%' :
+               '60 4.8% 95.9%' %>;
+    --muted-foreground: <%= baseColor === 'slate' ? '215.4 16.3% 46.9%' :
+                           baseColor === 'gray' ? '220 8.9% 46.1%' :
+                           baseColor === 'zinc' ? '240 3.8% 46.1%' :
+                           baseColor === 'neutral' ? '0 0% 45.1%' :
+                           baseColor === 'stone' ? '25 5.3% 44.7%' :
+                           '25 5.3% 44.7%' %>;
+
+    /* Sophisticated, warm primary colors */
+    --primary: <%= accentColor === 'blue' ? '221.2 83.2% 53.3%' :
+                 accentColor === 'green' ? '142.1 76.2% 36.3%' :
+                 accentColor === 'purple' ? '262.1 83.3% 57.8%' :
+                 accentColor === 'red' ? '0 72.2% 50.6%' :
+                 accentColor === 'orange' ? '24.6 95% 53.1%' :
+                 accentColor === 'yellow' ? '47.9 95.8% 53.1%' :
+                 accentColor === 'pink' ? '330.4 81.2% 60.4%' :
+                 accentColor === 'violet' ? '262.1 83.3% 57.8%' :
+                 '24.6 95% 53.1%' %>;
+    --primary-foreground: 60 9.1% 97.8%;
+
+    --secondary: 60 4.8% 95.9%;
+    --secondary-foreground: 24 9.8% 10%;
+
+    --accent: 60 4.8% 95.9%;
+    --accent-foreground: 24 9.8% 10%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 60 9.1% 97.8%;
+
+    /* Refined, subtle borders */
+    --border: 20 5.9% 90%;
+    --input: 20 5.9% 90%;
+    --ring: <%= accentColor === 'blue' ? '221.2 83.2% 53.3%' :
+              accentColor === 'green' ? '142.1 76.2% 36.3%' :
+              accentColor === 'purple' ? '262.1 83.3% 57.8%' :
+              accentColor === 'red' ? '0 72.2% 50.6%' :
+              accentColor === 'orange' ? '24.6 95% 53.1%' :
+              accentColor === 'yellow' ? '47.9 95.8% 53.1%' :
+              accentColor === 'pink' ? '330.4 81.2% 60.4%' :
+              accentColor === 'violet' ? '262.1 83.3% 57.8%' :
+              '24.6 95% 53.1%' %>;
+
+    /* Lyra-specific elegant radius */
+    --radius: <%= borderRadius === 'default' ? '0.375' : borderRadius %>rem;
+
+    /* Refined chart colors */
+    --chart-1: 24.6 95% 53.1%;
+    --chart-2: 142.1 76.2% 36.3%;
+    --chart-3: 221.2 83.2% 53.3%;
+    --chart-4: 0 72.2% 50.6%;
+    --chart-5: 262.1 83.3% 57.8%;
+  }
+
+  .dark {
+    /* Lyra dark mode: Warm, sophisticated dark palette */
+    --background: 20 14.3% 4.1%;
+    --foreground: 60 9.1% 97.8%;
+
+    --card: 20 14.3% 4.1%;
+    --card-foreground: 60 9.1% 97.8%;
+
+    --popover: 20 14.3% 4.1%;
+    --popover-foreground: 60 9.1% 97.8%;
+
+    --muted: 12 6.5% 15.1%;
+    --muted-foreground: 24 5.4% 63.9%;
+
+    --primary: <%= accentColor === 'blue' ? '217.2 91.2% 59.8%' :
+                 accentColor === 'green' ? '142.1 70.6% 45.3%' :
+                 accentColor === 'purple' ? '263.4 70% 50.4%' :
+                 accentColor === 'red' ? '0 72.2% 50.6%' :
+                 accentColor === 'orange' ? '20.5 90.2% 48.2%' :
+                 accentColor === 'yellow' ? '47.9 95.8% 53.1%' :
+                 accentColor === 'pink' ? '330.4 81.2% 60.4%' :
+                 accentColor === 'violet' ? '263.4 70% 50.4%' :
+                 '20.5 90.2% 48.2%' %>;
+    --primary-foreground: 60 9.1% 97.8%;
+
+    --secondary: 12 6.5% 15.1%;
+    --secondary-foreground: 60 9.1% 97.8%;
+
+    --accent: 12 6.5% 15.1%;
+    --accent-foreground: 60 9.1% 97.8%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 60 9.1% 97.8%;
+
+    --border: 12 6.5% 15.1%;
+    --input: 12 6.5% 15.1%;
+    --ring: <%= accentColor === 'blue' ? '217.2 91.2% 59.8%' :
+              accentColor === 'green' ? '142.1 70.6% 45.3%' :
+              accentColor === 'purple' ? '263.4 70% 50.4%' :
+              accentColor === 'red' ? '0 72.2% 50.6%' :
+              accentColor === 'orange' ? '20.5 90.2% 48.2%' :
+              accentColor === 'yellow' ? '47.9 95.8% 53.1%' :
+              accentColor === 'pink' ? '330.4 81.2% 60.4%' :
+              accentColor === 'violet' ? '263.4 70% 50.4%' :
+              '20.5 90.2% 48.2%' %>;
+
+    --chart-1: 20.5 90.2% 48.2%;
+    --chart-2: 142.1 70.6% 45.3%;
+    --chart-3: 217.2 91.2% 59.8%;
+    --chart-4: 0 72.2% 50.6%;
+    --chart-5: 263.4 70% 50.4%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    <% if (font === 'crimson') { %>
+    font-family: 'Crimson Pro', Georgia, serif;
+    <% } else if (font === 'figtree') { %>
+    font-family: 'Figtree', sans-serif;
+    font-feature-settings: 'cv03', 'cv04', 'cv11';
+    <% } else if (font === 'inter') { %>
+    font-family: 'Inter', sans-serif;
+    <% } else if (font === 'geist') { %>
+    font-family: 'Geist', sans-serif;
+    <% } else if (font === 'mono') { %>
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    <% } %>
+    line-height: 1.7;
+    letter-spacing: 0.01em;
+  }
+
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Editorial typography enhancements */
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  p {
+    line-height: 1.75;
+  }
+}
+
+/* Lyra theme: Editorial, refined component styles */
+@layer components {
+  /* Elegant, refined buttons */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90
+           px-5 py-2.5 rounded-md font-medium transition-all duration-300
+           shadow-sm hover:shadow-md border-0;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80
+           px-5 py-2.5 rounded-md font-medium transition-all duration-300
+           border border-border;
+  }
+
+  .btn-outline {
+    @apply border border-primary text-primary hover:bg-primary hover:text-primary-foreground
+           px-5 py-2.5 rounded-md font-medium transition-all duration-300;
+  }
+
+  /* Elegant card styling with subtle shadows */
+  .card {
+    @apply bg-card text-card-foreground rounded-lg border border-border/60
+           shadow-sm hover:shadow-md transition-all duration-300 p-8;
+  }
+
+  .card-header {
+    @apply pb-4 space-y-2;
+  }
+
+  .card-title {
+    @apply text-2xl font-semibold leading-tight tracking-tight;
+  }
+
+  .card-description {
+    @apply text-base text-muted-foreground leading-relaxed;
+  }
+
+  .card-content {
+    @apply pt-0;
+  }
+
+  .card-footer {
+    @apply flex items-center pt-6;
+  }
+
+  /* Elegant menu styling */
+  <% if (menuAccent === 'subtle') { %>
+  .menu-item {
+    @apply px-4 py-2.5 rounded-md text-sm font-medium transition-colors duration-200
+           hover:bg-muted hover:text-foreground
+           focus:bg-muted focus:text-foreground focus:outline-none;
+  }
+
+  .menu-item-active {
+    @apply bg-muted text-foreground;
+  }
+  <% } else { %>
+  .menu-item {
+    @apply px-4 py-2.5 rounded-md text-sm font-medium transition-colors duration-200
+           hover:text-primary
+           focus:text-primary focus:outline-none;
+  }
+
+  .menu-item-active {
+    @apply text-primary border-b-2 border-primary;
+  }
+  <% } %>
+
+  /* Refined input styling */
+  .input {
+    @apply flex h-11 w-full rounded-md border border-input bg-background px-4 py-3
+           text-sm ring-offset-background transition-all duration-200
+           file:border-0 file:bg-transparent file:text-sm file:font-medium
+           placeholder:text-muted-foreground
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .select-trigger {
+    @apply flex h-11 w-full items-center justify-between rounded-md border border-input
+           bg-background px-4 py-3 text-sm ring-offset-background
+           placeholder:text-muted-foreground
+           focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .form-item {
+    @apply space-y-3;
+  }
+
+  .form-label {
+    @apply text-sm font-medium leading-none tracking-wide uppercase text-muted-foreground
+           peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
+  }
+
+  .form-description {
+    @apply text-sm text-muted-foreground leading-relaxed;
+  }
+
+  .form-message {
+    @apply text-sm font-medium text-destructive;
+  }
+}
+
+/* Lyra utilities for editorial design */
+@layer utilities {
+  .text-editorial {
+    line-height: 1.75;
+    letter-spacing: 0.01em;
+  }
+
+  .heading-editorial {
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .shadow-editorial {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  .shadow-editorial-lg {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.06);
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out;
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Drop cap for editorial content */
+  .drop-cap::first-letter {
+    float: left;
+    font-size: 3.5rem;
+    line-height: 1;
+    padding-right: 0.5rem;
+    font-weight: 700;
+    color: hsl(var(--primary));
+  }
+}
+
+<% if (componentLibrary === 'base-ui') { %>
+/* Base UI enhancements for Lyra theme */
+@layer components {
+  [data-ui="Button"] {
+    @apply rounded-md transition-all duration-300;
+  }
+
+  [data-ui="Field.Root"] {
+    @apply space-y-3;
+  }
+
+  [data-ui="Field.Control"] {
+    @apply rounded-md border-border/60;
+  }
+
+  [data-ui="Field.Label"] {
+    @apply text-sm font-medium uppercase tracking-wide text-muted-foreground;
+  }
+
+  [data-ui="Select.Trigger"] {
+    @apply rounded-md border-border/60;
+  }
+
+  [data-ui="Select.Content"] {
+    @apply rounded-md border border-border shadow-editorial-lg;
+  }
+
+  [data-ui="Dialog.Content"] {
+    @apply rounded-lg border border-border shadow-editorial-lg;
+  }
+
+  [data-ui="Popover.Content"] {
+    @apply rounded-md border border-border shadow-editorial-lg;
+  }
+}
+<% } %>
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    font-size: 11pt;
+    line-height: 1.6;
+  }
+
+  .card {
+    @apply border border-gray-300 shadow-none;
+    break-inside: avoid;
+  }
+
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+}

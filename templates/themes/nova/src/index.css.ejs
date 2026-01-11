@@ -1,0 +1,391 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+<% if (font === 'figtree') { %>
+@import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap');
+<% } else if (font === 'inter') { %>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+<% } else if (font === 'geist') { %>
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap');
+<% } %>
+
+@layer base {
+  :root {
+    /* Nova theme: Modern, bold design with strong presence */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    /* Bold, high-contrast muted colors */
+    --muted: <%= baseColor === 'slate' ? '210 40% 96.1%' :
+               baseColor === 'gray' ? '220 14.3% 95.9%' :
+               baseColor === 'zinc' ? '240 4.8% 95.9%' :
+               baseColor === 'neutral' ? '0 0% 96.1%' :
+               baseColor === 'stone' ? '60 4.8% 95.9%' :
+               '240 4.8% 95.9%' %>;
+    --muted-foreground: <%= baseColor === 'slate' ? '215.4 16.3% 42%' :
+                           baseColor === 'gray' ? '220 8.9% 42%' :
+                           baseColor === 'zinc' ? '240 3.8% 42%' :
+                           baseColor === 'neutral' ? '0 0% 42%' :
+                           baseColor === 'stone' ? '25 5.3% 42%' :
+                           '240 3.8% 42%' %>;
+
+    /* Bold, saturated primary colors */
+    --primary: <%= accentColor === 'blue' ? '222.2 91.4% 50.8%' :
+                 accentColor === 'green' ? '142 86% 28%' :
+                 accentColor === 'purple' ? '270 75% 55%' :
+                 accentColor === 'red' ? '0 85% 50%' :
+                 accentColor === 'orange' ? '25 100% 50%' :
+                 accentColor === 'yellow' ? '45 100% 50%' :
+                 accentColor === 'pink' ? '335 85% 55%' :
+                 accentColor === 'violet' ? '270 75% 55%' :
+                 '222.2 91.4% 50.8%' %>;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: <%= baseColor === 'slate' ? '210 40% 92%' :
+                   baseColor === 'gray' ? '220 14.3% 92%' :
+                   baseColor === 'zinc' ? '240 4.8% 92%' :
+                   baseColor === 'neutral' ? '0 0% 92%' :
+                   baseColor === 'stone' ? '60 4.8% 92%' :
+                   '240 4.8% 92%' %>;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --accent: <%= baseColor === 'slate' ? '210 40% 94%' :
+                baseColor === 'gray' ? '220 14.3% 94%' :
+                baseColor === 'zinc' ? '240 4.8% 94%' :
+                baseColor === 'neutral' ? '0 0% 94%' :
+                baseColor === 'stone' ? '60 4.8% 94%' :
+                '240 4.8% 94%' %>;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 90% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Sharp, defined borders */
+    --border: <%= baseColor === 'slate' ? '214.3 31.8% 88%' :
+                baseColor === 'gray' ? '220 13% 88%' :
+                baseColor === 'zinc' ? '240 5.9% 88%' :
+                baseColor === 'neutral' ? '0 0% 88%' :
+                baseColor === 'stone' ? '60 5.9% 88%' :
+                '240 5.9% 88%' %>;
+    --input: <%= baseColor === 'slate' ? '214.3 31.8% 88%' :
+               baseColor === 'gray' ? '220 13% 88%' :
+               baseColor === 'zinc' ? '240 5.9% 88%' :
+               baseColor === 'neutral' ? '0 0% 88%' :
+               baseColor === 'stone' ? '60 5.9% 88%' :
+               '240 5.9% 88%' %>;
+    --ring: <%= accentColor === 'blue' ? '222.2 91.4% 50.8%' :
+              accentColor === 'green' ? '142 86% 28%' :
+              accentColor === 'purple' ? '270 75% 55%' :
+              accentColor === 'red' ? '0 85% 50%' :
+              accentColor === 'orange' ? '25 100% 50%' :
+              accentColor === 'yellow' ? '45 100% 50%' :
+              accentColor === 'pink' ? '335 85% 55%' :
+              accentColor === 'violet' ? '270 75% 55%' :
+              '222.2 91.4% 50.8%' %>;
+
+    /* Nova-specific sharp radius */
+    --radius: <%= borderRadius === 'default' ? '0.25' : borderRadius %>rem;
+
+    /* Bold chart colors */
+    --chart-1: 222.2 91.4% 50.8%;
+    --chart-2: 142 86% 28%;
+    --chart-3: 25 100% 50%;
+    --chart-4: 0 85% 50%;
+    --chart-5: 270 75% 55%;
+  }
+
+  .dark {
+    /* Nova dark mode: Bold, high-contrast dark palette */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --muted: <%= baseColor === 'slate' ? '217.2 32.6% 14%' :
+               baseColor === 'gray' ? '215 19.3% 14%' :
+               baseColor === 'zinc' ? '240 3.7% 14%' :
+               baseColor === 'neutral' ? '0 0% 14%' :
+               baseColor === 'stone' ? '33.3 5.5% 14%' :
+               '240 3.7% 14%' %>;
+    --muted-foreground: <%= baseColor === 'slate' ? '215 20.2% 60%' :
+                           baseColor === 'gray' ? '217.9 10.6% 60%' :
+                           baseColor === 'zinc' ? '240 5% 60%' :
+                           baseColor === 'neutral' ? '0 0% 60%' :
+                           baseColor === 'stone' ? '30 6.3% 60%' :
+                           '240 5% 60%' %>;
+
+    /* Vibrant primary for dark mode */
+    --primary: <%= accentColor === 'blue' ? '217.2 94% 60%' :
+                 accentColor === 'green' ? '142 80% 45%' :
+                 accentColor === 'purple' ? '270 80% 60%' :
+                 accentColor === 'red' ? '0 85% 55%' :
+                 accentColor === 'orange' ? '25 100% 55%' :
+                 accentColor === 'yellow' ? '45 100% 55%' :
+                 accentColor === 'pink' ? '335 85% 60%' :
+                 accentColor === 'violet' ? '270 80% 60%' :
+                 '217.2 94% 60%' %>;
+    --primary-foreground: 222.2 84% 4.9%;
+
+    --secondary: <%= baseColor === 'slate' ? '217.2 32.6% 14%' :
+                   baseColor === 'gray' ? '215 19.3% 14%' :
+                   baseColor === 'zinc' ? '240 3.7% 14%' :
+                   baseColor === 'neutral' ? '0 0% 14%' :
+                   baseColor === 'stone' ? '33.3 5.5% 14%' :
+                   '240 3.7% 14%' %>;
+    --secondary-foreground: 210 40% 98%;
+
+    --accent: <%= baseColor === 'slate' ? '217.2 32.6% 14%' :
+                baseColor === 'gray' ? '215 19.3% 14%' :
+                baseColor === 'zinc' ? '240 3.7% 14%' :
+                baseColor === 'neutral' ? '0 0% 14%' :
+                baseColor === 'stone' ? '33.3 5.5% 14%' :
+                '240 3.7% 14%' %>;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: <%= baseColor === 'slate' ? '217.2 32.6% 18%' :
+                baseColor === 'gray' ? '215 19.3% 18%' :
+                baseColor === 'zinc' ? '240 3.7% 18%' :
+                baseColor === 'neutral' ? '0 0% 18%' :
+                baseColor === 'stone' ? '33.3 5.5% 18%' :
+                '240 3.7% 18%' %>;
+    --input: <%= baseColor === 'slate' ? '217.2 32.6% 18%' :
+               baseColor === 'gray' ? '215 19.3% 18%' :
+               baseColor === 'zinc' ? '240 3.7% 18%' :
+               baseColor === 'neutral' ? '0 0% 18%' :
+               baseColor === 'stone' ? '33.3 5.5% 18%' :
+               '240 3.7% 18%' %>;
+    --ring: <%= accentColor === 'blue' ? '217.2 94% 60%' :
+              accentColor === 'green' ? '142 80% 45%' :
+              accentColor === 'purple' ? '270 80% 60%' :
+              accentColor === 'red' ? '0 85% 55%' :
+              accentColor === 'orange' ? '25 100% 55%' :
+              accentColor === 'yellow' ? '45 100% 55%' :
+              accentColor === 'pink' ? '335 85% 60%' :
+              accentColor === 'violet' ? '270 80% 60%' :
+              '217.2 94% 60%' %>;
+
+    --chart-1: 217.2 94% 60%;
+    --chart-2: 142 80% 45%;
+    --chart-3: 25 100% 55%;
+    --chart-4: 0 85% 55%;
+    --chart-5: 270 80% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    <% if (font === 'figtree') { %>
+    font-family: 'Figtree', sans-serif;
+    font-feature-settings: 'cv03', 'cv04', 'cv11';
+    <% } else if (font === 'inter') { %>
+    font-family: 'Inter', sans-serif;
+    <% } else if (font === 'geist') { %>
+    font-family: 'Geist', sans-serif;
+    <% } else if (font === 'crimson') { %>
+    font-family: 'Crimson Pro', serif;
+    <% } else if (font === 'mono') { %>
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    <% } %>
+    font-weight: 500;
+  }
+
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+}
+
+/* Nova theme: Bold, modern component styles */
+@layer components {
+  /* Bold, impactful buttons */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/85
+           px-5 py-2.5 rounded font-semibold transition-all duration-150
+           shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98] border-0;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/70
+           px-5 py-2.5 rounded font-semibold transition-all duration-150
+           border-2 border-border;
+  }
+
+  .btn-outline {
+    @apply border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground
+           px-5 py-2.5 rounded font-semibold transition-all duration-150;
+  }
+
+  /* Bold card styling with strong shadows */
+  .card {
+    @apply bg-card text-card-foreground rounded-lg border-2 border-border
+           shadow-lg hover:shadow-xl transition-shadow duration-200 p-6;
+  }
+
+  .card-header {
+    @apply pb-4 space-y-1;
+  }
+
+  .card-title {
+    @apply text-xl font-bold leading-none tracking-tight;
+  }
+
+  .card-description {
+    @apply text-sm text-muted-foreground font-medium;
+  }
+
+  .card-content {
+    @apply pt-0;
+  }
+
+  .card-footer {
+    @apply flex items-center pt-4;
+  }
+
+  /* Bold menu styling */
+  <% if (menuAccent === 'subtle') { %>
+  .menu-item {
+    @apply px-3 py-2 rounded text-sm font-semibold transition-colors duration-100
+           hover:bg-muted hover:text-foreground
+           focus:bg-muted focus:text-foreground focus:outline-none;
+  }
+
+  .menu-item-active {
+    @apply bg-muted text-foreground;
+  }
+  <% } else { %>
+  .menu-item {
+    @apply px-3 py-2 rounded text-sm font-semibold transition-all duration-100
+           hover:bg-primary hover:text-primary-foreground
+           focus:bg-primary focus:text-primary-foreground focus:outline-none;
+  }
+
+  .menu-item-active {
+    @apply bg-primary text-primary-foreground;
+  }
+  <% } %>
+
+  /* Bold input styling */
+  .input {
+    @apply flex h-11 w-full rounded border-2 border-input bg-background px-4 py-2
+           text-sm font-medium ring-offset-background transition-all duration-150
+           file:border-0 file:bg-transparent file:text-sm file:font-semibold
+           placeholder:text-muted-foreground
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+           focus-visible:border-primary
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .select-trigger {
+    @apply flex h-11 w-full items-center justify-between rounded border-2 border-input
+           bg-background px-4 py-2 text-sm font-medium ring-offset-background
+           placeholder:text-muted-foreground
+           focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .form-item {
+    @apply space-y-2;
+  }
+
+  .form-label {
+    @apply text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
+  }
+
+  .form-description {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .form-message {
+    @apply text-sm font-semibold text-destructive;
+  }
+}
+
+/* Nova utilities for bold design */
+@layer utilities {
+  .shadow-nova {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .shadow-nova-lg {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .text-gradient-nova {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .border-bold {
+    @apply border-2 border-border;
+  }
+}
+
+<% if (componentLibrary === 'base-ui') { %>
+/* Base UI enhancements for Nova theme */
+@layer components {
+  [data-ui="Button"] {
+    @apply rounded font-semibold transition-all duration-150;
+  }
+
+  [data-ui="Button"][data-variant="solid"] {
+    @apply shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  [data-ui="Field.Control"] {
+    @apply rounded border-2 border-border;
+  }
+
+  [data-ui="Select.Trigger"] {
+    @apply rounded border-2 border-border;
+  }
+
+  [data-ui="Select.Content"] {
+    @apply rounded border-2 border-border shadow-nova-lg;
+  }
+
+  [data-ui="Dialog.Content"] {
+    @apply rounded-lg border-2 border-border shadow-nova-lg;
+  }
+
+  [data-ui="Popover.Content"] {
+    @apply rounded border-2 border-border shadow-nova-lg;
+  }
+}
+<% } %>
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+
+  .card {
+    @apply border-2 border-gray-400 shadow-none;
+    break-inside: avoid;
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "name": "playwright",
+  "displayName": "Playwright Server",
+  "description": "Provides browser automation for E2E testing and web interactions",
+  "package": "@modelcontextprotocol/server-playwright",
+  "version": "^1.0.0",
+
+  "command": "npx",
+  "args": [
+    "-y",
+    "@modelcontextprotocol/server-playwright"
+  ],
+  "env": {
+    "PLAYWRIGHT_BROWSER": "chromium",
+    "PLAYWRIGHT_HEADLESS": "true"
+  },
+
+  "capabilities": [
+    "navigate",
+    "click",
+    "fill",
+    "select",
+    "screenshot",
+    "get_text",
+    "wait_for_selector",
+    "evaluate",
+    "close_page"
+  ],
+
+  "autoApprove": [
+    "navigate",
+    "screenshot",
+    "get_text",
+    "wait_for_selector"
+  ],
+
+  "requiresApproval": [
+    "click",
+    "fill",
+    "select",
+    "evaluate"
+  ],
+
+  "restrictions": {
+    "allowedDomains": [
+      "localhost",
+      "127.0.0.1",
+<% if (deployTarget === 'vercel') { %>
+      "*.vercel.app",
+<% } else if (deployTarget === 'netlify') { %>
+      "*.netlify.app",
+<% } %>
+      "<%= projectName %>.dev"
+    ],
+    "blockedDomains": [
+      "*.banking.*",
+      "*.payment.*",
+      "*.admin.*"
+    ],
+    "maxScreenshots": 50,
+    "maxNavigations": 100
+  },
+
+  "browserConfig": {
+    "defaultBrowser": "chromium",
+    "headless": true,
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "timeout": 30000
+  },
+
+  "testingIntegration": {
+    "configPath": "playwright.config.ts",
+    "testDirectory": "tests/e2e"
+  },
+
+  "healthCheck": {
+    "method": "browser_launch",
+    "url": "http://localhost:3000",
+    "expectedStatus": 200
+  }
+}
