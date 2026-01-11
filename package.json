@@ -1,15 +1,27 @@
 {
   "name": "create-karetech-stack",
-  "version": "0.0.1",
-  "description": "Enhanced Better-T-Stack scaffold with PBS, testing, and DevOps built-in",
+  "version": "0.1.0",
+  "description": "Enhanced Better-T-Stack scaffold with AI-ready structure, testing, and DevOps built-in. Create production-ready TypeScript full-stack apps in 2 minutes.",
   "type": "module",
   "bin": {
     "create-karetech-stack": "./dist/index.js"
   },
   "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./presets": {
+      "import": "./dist/presets/index.js",
+      "types": "./dist/presets/index.d.ts"
+    }
+  },
   "scripts": {
     "dev": "bun run src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target node",
+    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
+    "build:all": "bun run build && bun run build:types",
     "test": "bun test",
     "test:unit": "bun test src/",
     "test:e2e": "bun run tests/run-e2e.ts",
@@ -18,21 +30,58 @@
     "test:all": "bun run test && bun run test:e2e",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/ tests/",
+    "lint:fix": "eslint src/ tests/ --fix",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "validate": "bun run typecheck && bun run lint && bun run test:all",
-    "prepublishOnly": "bun run build && bun run validate"
+    "clean": "rm -rf dist node_modules/.cache",
+    "prepublishOnly": "bun run clean && bun run build:all && bun run validate",
+    "postpublish": "git push && git push --tags",
+    "version": "bun run scripts/prepare-release.ts && git add -A",
+    "release": "bun run scripts/prepare-release.ts",
+    "release:patch": "npm version patch",
+    "release:minor": "npm version minor",
+    "release:major": "npm version major"
   },
   "keywords": [
     "scaffold",
+    "create",
+    "generator",
+    "cli",
     "better-t-stack",
     "typescript",
     "bun",
     "hono",
     "drizzle",
+    "drizzle-orm",
     "tanstack",
+    "tanstack-router",
+    "tanstack-query",
     "shadcn",
-    "cli",
-    "generator"
+    "shadcn-ui",
+    "base-ui",
+    "react",
+    "vite",
+    "tailwind",
+    "tailwindcss",
+    "postgresql",
+    "sqlite",
+    "turso",
+    "better-auth",
+    "orpc",
+    "playwright",
+    "vitest",
+    "docker",
+    "github-actions",
+    "ci-cd",
+    "devops",
+    "ai-ready",
+    "claude",
+    "pbs",
+    "full-stack",
+    "starter",
+    "boilerplate",
+    "template"
   ],
   "author": {
     "name": "Kareem Schultz",
@@ -48,8 +97,30 @@
     "url": "https://github.com/kareemschultz/karetech-stack/issues"
   },
   "homepage": "https://github.com/kareemschultz/karetech-stack#readme",
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/kareemschultz"
+    }
+  ],
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "tag": "latest"
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
@@ -72,6 +143,8 @@
     "dist",
     "templates",
     "README.md",
-    "LICENSE"
-  ]
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "preferGlobal": false
 }

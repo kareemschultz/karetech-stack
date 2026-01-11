@@ -1,0 +1,236 @@
+name: Publish to npm
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (skip actual publish)'
+        required: false
+        default: 'false'
+        type: boolean
+      tag:
+        description: 'npm tag (latest, beta, alpha, next)'
+        required: false
+        default: 'latest'
+        type: choice
+        options:
+          - latest
+          - beta
+          - alpha
+          - next
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  NODE_VERSION: '20'
+  BUN_VERSION: '1.1.0'
+
+jobs:
+  # ============================================
+  # Quality Gate - Run all checks before publish
+  # ============================================
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type check
+        run: bun run typecheck
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Run tests
+        run: bun run test
+
+      - name: Build
+        run: bun run build:all
+
+      - name: Verify build artifacts
+        run: |
+          echo "Checking build artifacts..."
+          ls -la dist/
+          test -f dist/index.js || (echo "Missing dist/index.js" && exit 1)
+          echo "Build artifacts verified!"
+
+  # ============================================
+  # Publish to npm
+  # ============================================
+  publish:
+    name: Publish to npm
+    needs: quality-gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build:all
+
+      - name: Get package info
+        id: package
+        run: |
+          echo "name=$(jq -r .name package.json)" >> $GITHUB_OUTPUT
+          echo "version=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
+
+      - name: Check if version exists on npm
+        id: check-version
+        run: |
+          VERSION=${{ steps.package.outputs.version }}
+          NAME=${{ steps.package.outputs.name }}
+          if npm view $NAME@$VERSION version 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "::warning::Version $VERSION already exists on npm"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Version $VERSION is new"
+          fi
+
+      - name: Determine npm tag
+        id: npm-tag
+        run: |
+          VERSION=${{ steps.package.outputs.version }}
+          INPUT_TAG=${{ github.event.inputs.tag || 'latest' }}
+
+          # Auto-detect pre-release versions
+          if [[ "$VERSION" == *"-alpha"* ]]; then
+            echo "tag=alpha" >> $GITHUB_OUTPUT
+          elif [[ "$VERSION" == *"-beta"* ]]; then
+            echo "tag=beta" >> $GITHUB_OUTPUT
+          elif [[ "$VERSION" == *"-rc"* ]]; then
+            echo "tag=next" >> $GITHUB_OUTPUT
+          else
+            echo "tag=$INPUT_TAG" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish to npm (dry run)
+        if: github.event.inputs.dry_run == 'true'
+        run: |
+          echo "DRY RUN - Would publish with tag: ${{ steps.npm-tag.outputs.tag }}"
+          npm publish --dry-run --tag ${{ steps.npm-tag.outputs.tag }}
+
+      - name: Publish to npm
+        if: github.event.inputs.dry_run != 'true' && steps.check-version.outputs.exists == 'false'
+        run: npm publish --provenance --access public --tag ${{ steps.npm-tag.outputs.tag }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Skip publish (version exists)
+        if: steps.check-version.outputs.exists == 'true'
+        run: |
+          echo "Skipping publish - version ${{ steps.package.outputs.version }} already exists"
+
+      - name: Create publish summary
+        run: |
+          echo "## 📦 Publish Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Package** | \`${{ steps.package.outputs.name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Version** | \`${{ steps.package.outputs.version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Tag** | \`${{ steps.npm-tag.outputs.tag }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Dry Run** | ${{ github.event.inputs.dry_run || 'false' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Installation" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "bunx ${{ steps.package.outputs.name }} my-app" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # Post-publish verification
+  # ============================================
+  verify:
+    name: Verify Publication
+    needs: publish
+    runs-on: ubuntu-latest
+    if: github.event.inputs.dry_run != 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Wait for npm propagation
+        run: sleep 30
+
+      - name: Get package info
+        id: package
+        run: |
+          echo "name=$(jq -r .name package.json)" >> $GITHUB_OUTPUT
+          echo "version=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
+
+      - name: Verify package on npm
+        run: |
+          echo "Verifying ${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }}..."
+          npm view ${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }}
+
+      - name: Test installation
+        run: |
+          echo "Testing installation..."
+          mkdir -p /tmp/test-install
+          cd /tmp/test-install
+          bunx ${{ steps.package.outputs.name }} test-project --preset minimal --no-install --no-git
+          ls -la test-project/
+          test -f test-project/package.json || (echo "Installation test failed" && exit 1)
+          echo "Installation test passed!"
+
+      - name: Create verification summary
+        run: |
+          echo "## ✅ Verification Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Package \`${{ steps.package.outputs.name }}@${{ steps.package.outputs.version }}\` was successfully:" >> $GITHUB_STEP_SUMMARY
+          echo "- Published to npm" >> $GITHUB_STEP_SUMMARY
+          echo "- Verified on registry" >> $GITHUB_STEP_SUMMARY
+          echo "- Tested via \`bunx\` installation" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # Notify on failure
+  # ============================================
+  notify-failure:
+    name: Notify Failure
+    needs: [quality-gate, publish, verify]
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Create failure summary
+        run: |
+          echo "## ❌ Publish Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The publish workflow failed. Please check the logs for details." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Troubleshooting" >> $GITHUB_STEP_SUMMARY
+          echo "1. Check if NPM_TOKEN secret is set correctly" >> $GITHUB_STEP_SUMMARY
+          echo "2. Verify the version doesn't already exist" >> $GITHUB_STEP_SUMMARY
+          echo "3. Ensure all tests pass locally" >> $GITHUB_STEP_SUMMARY
+          echo "4. Check the build artifacts" >> $GITHUB_STEP_SUMMARY
