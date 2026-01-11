@@ -8,7 +8,8 @@ dist/
 
 # IDE
 .idea/
-.vscode/
+.vscode/settings.json
+.vscode/launch.json
 *.swp
 *.swo
 .DS_Store
@@ -22,10 +23,14 @@ dist/
 logs/
 *.log
 npm-debug.log*
+bun-debug.log*
 
 # Testing
 coverage/
 .nyc_output/
+test-results/
+playwright-report/
+.playwright/
 
 # Beads (local cache)
 .beads/beads.db
@@ -36,8 +41,42 @@ coverage/
 
 # Claude Code (local)
 .claude/settings.local.json
+.claude/memory.json
+
+# MCP Related
+.mcp.json.local
+mcp-test-output/
+.mcp-cache/
+mcp-server-logs/
+
+# Generated test projects
+test-output/
+generated-projects/
+*.generated/
 
 # Temp files
 *.tmp
 *.temp
 .cache/
+tmp/
+
+# OS files
+Thumbs.db
+ehthumbs.db
+
+# Package manager locks (keep bun.lock)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Debug files
+*.debug
+debug-*.log
+
+# Benchmark results
+benchmark-results/
+*.benchmark.json
+
+# Local scripts output
+scripts/*.local.*
+scripts/output/
