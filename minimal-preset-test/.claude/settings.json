@@ -1,0 +1,31 @@
+{
+  "workspaceFolder": ".",
+  "aiWorkflow": {
+    "enabled": true,
+    "level": "docs",
+    "beadsIntegration": false,
+    "trackingEnabled": false
+  },
+  "project": {
+    "name": "minimal-preset-test",
+    "description": "Minimal setup for simple applications",
+    "author": "kareemschultz",
+    "techStack": {
+      "runtime": "bun",
+      "framework": "better-t-stack",
+      "database": "sqlite",
+      "auth": [
+        "email"
+      ],
+      "testing": [],
+      "deployment": "vercel"
+    }
+  },
+  "constitution": {
+    "strictTypeScript": true,
+    "noAnyTypes": true,
+    "testingRequired": true,
+    "documentationRequired": true,
+    "beadsTracking": false
+  }
+}

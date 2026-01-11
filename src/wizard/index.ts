@@ -7,6 +7,9 @@ import { text, select, confirm, multiselect, isCancel, cancel } from '@clack/pro
 import pc from 'picocolors';
 import { ProjectConfig, DatabaseType, AuthProvider, UiStyle, TestingFramework, CiCdPlatform, PbsLevel, AccentColor, BaseColor, FontFamily, IconLibrary, BorderRadius, DeployTarget, AnalyticsProvider, EmailProvider, ErrorTrackingProvider, McpServer, ComponentLibrary, MenuAccent } from '../types';
 import { validateProjectNamePrompt, validateDescriptionPrompt, validateAuthorPrompt } from '../validation';
+import { detectGitHubRepository, displayGitHubDetection, autoConfigureGitHubMCP } from '../generators/github-detection';
+import { MCPRegistry } from '../mcp/registry';
+import { validateMCPAvailability } from '../mcp/auto-installer';
 
 // Wizard step interface
 export interface WizardStep {
@@ -566,7 +569,7 @@ export async function devOpsStep(context: WizardContext): Promise<Partial<Projec
 }
 
 /**
- * Enhanced step 6: AI Workflow
+ * Enhanced step 6: AI Workflow with intelligent MCP integration
  */
 export async function aiWorkflowStep(context: WizardContext): Promise<Partial<ProjectConfig>> {
   const updates: Partial<ProjectConfig> = {};
@@ -582,7 +585,7 @@ export async function aiWorkflowStep(context: WizardContext): Promise<Partial<Pr
       {
         value: 'full',
         label: 'Full PBS System',
-        hint: 'Complete documentation + Beads + Claude Code'
+        hint: 'Complete documentation + Beads + Claude Code + MCP'
       },
       {
         value: 'docs',
@@ -644,26 +647,164 @@ export async function aiWorkflowStep(context: WizardContext): Promise<Partial<Pr
     updates.claudeCodeHooks = claudeCodeHooks;
   }
 
-  // MCP servers
+  // MCP servers integration
   if (pbsLevel === 'full' || pbsLevel === 'docs') {
-    const mcpServers = await multiselect({
-      message: 'Select MCP servers to include:',
-      options: [
-        { value: 'filesystem', label: 'Filesystem', hint: 'File operations and search' },
-        { value: 'github', label: 'GitHub', hint: 'Repository management' },
-        { value: 'postgres', label: 'PostgreSQL', hint: 'Database operations' },
-        { value: 'playwright', label: 'Playwright', hint: 'Web automation' }
-      ],
-      initialValues: context.config.mcpServers || ['filesystem'],
-      required: false,
+    console.log(pc.blue('\n🔍 Analyzing project for MCP server recommendations...'));
+
+    // Auto-detect GitHub repository
+    const githubDetection = detectGitHubRepository(process.cwd(), context.config as ProjectConfig);
+    if (githubDetection.detected) {
+      displayGitHubDetection(githubDetection);
+    }
+
+    // Build smart defaults based on project configuration
+    const smartDefaults: string[] = ['filesystem']; // Always include filesystem
+
+    // Add database-specific server
+    const currentConfig = { ...context.config, ...updates } as ProjectConfig;
+    if (currentConfig.database === 'postgresql') {
+      smartDefaults.push('postgres');
+    } else if (currentConfig.database === 'turso') {
+      smartDefaults.push('turso');
+    } else if (currentConfig.database === 'sqlite') {
+      smartDefaults.push('sqlite');
+    }
+
+    // Add GitHub if detected
+    if (githubDetection.detected) {
+      smartDefaults.push('github');
+    }
+
+    // Add testing servers if testing is enabled
+    if (currentConfig.testing?.includes('playwright')) {
+      smartDefaults.push('playwright');
+    }
+
+    // Get available servers from registry
+    const registry = new MCPRegistry();
+    const availableServers = registry.getAll();
+
+    // Build options from available servers
+    const mcpOptions = availableServers.map((server: any) => ({
+      value: server.id,
+      label: server.name,
+      hint: server.description
+    }));
+
+    // Show smart recommendations
+    if (smartDefaults.length > 1) {
+      console.log(pc.green('\n✨ Smart recommendations based on your project:'));
+      smartDefaults.forEach(serverId => {
+        const server = availableServers.find((s: any) => s.id === serverId);
+        if (server) {
+          console.log(pc.gray(`   • ${server.name}: ${server.description}`));
+        }
+      });
+      console.log();
+    }
+
+    const useSmartDefaults = await confirm({
+      message: `Use smart defaults (${smartDefaults.join(', ')})?`,
+      initialValue: true,
     });
 
-    if (isCancel(mcpServers)) {
+    if (isCancel(useSmartDefaults)) {
       cancel('Operation cancelled');
       process.exit(0);
     }
 
-    updates.mcpServers = mcpServers as McpServer[];
+    let selectedServers: string[] = [];
+
+    if (useSmartDefaults) {
+      selectedServers = smartDefaults;
+
+      // Ask if they want to add more
+      const addMore = await confirm({
+        message: 'Add additional MCP servers?',
+        initialValue: false,
+      });
+
+      if (isCancel(addMore)) {
+        cancel('Operation cancelled');
+        process.exit(0);
+      }
+
+      if (addMore) {
+        // Show remaining options
+        const remainingOptions = mcpOptions.filter(opt => !smartDefaults.includes(opt.value));
+
+        if (remainingOptions.length > 0) {
+          const additionalServers = await multiselect({
+            message: 'Select additional MCP servers:',
+            options: remainingOptions,
+            initialValues: [],
+            required: false,
+          });
+
+          if (isCancel(additionalServers)) {
+            cancel('Operation cancelled');
+            process.exit(0);
+          }
+
+          selectedServers = [...smartDefaults, ...(additionalServers as string[])];
+        }
+      }
+    } else {
+      // Manual selection
+      const mcpServers = await multiselect({
+        message: 'Select MCP servers to include:',
+        options: mcpOptions,
+        initialValues: context.config.mcpServers || smartDefaults,
+        required: false,
+      });
+
+      if (isCancel(mcpServers)) {
+        cancel('Operation cancelled');
+        process.exit(0);
+      }
+
+      selectedServers = mcpServers as string[];
+    }
+
+    // Validate MCP availability
+    const tempConfig = { ...currentConfig, mcpServers: selectedServers as McpServer[] };
+    const availability = validateMCPAvailability(tempConfig);
+
+    if (!availability.valid) {
+      console.log(pc.yellow('\n⚠️  Warning: Some selected MCP servers are not available:'));
+      availability.missingServers.forEach(server => {
+        console.log(pc.gray(`   • ${server}`));
+      });
+      console.log(pc.dim('These servers will be excluded from the configuration.'));
+      selectedServers = availability.availableServers;
+    }
+
+    updates.mcpServers = selectedServers as McpServer[];
+
+    // Auto-configure GitHub MCP if detected
+    if (githubDetection.detected && selectedServers.includes('github')) {
+      const autoConfig = autoConfigureGitHubMCP(tempConfig);
+      if (autoConfig.updated) {
+        console.log(pc.green('\n✅ Auto-configured GitHub MCP integration'));
+        if (autoConfig.warnings.length > 0) {
+          console.log(pc.yellow('\n⚠️  Setup reminders:'));
+          autoConfig.warnings.forEach(warning => {
+            console.log(pc.gray(`   • ${warning}`));
+          });
+        }
+      }
+    }
+
+    // Show final selection summary
+    if (selectedServers.length > 0) {
+      console.log(pc.green('\n📦 Selected MCP servers:'));
+      selectedServers.forEach(serverId => {
+        const server = availableServers.find((s: any) => s.id === serverId);
+        if (server) {
+          console.log(pc.gray(`   ✓ ${server.name}`));
+        }
+      });
+    }
   } else {
     updates.mcpServers = [];
   }

@@ -1,0 +1,88 @@
+{
+  "workspaceFolder": ".",
+  "aiWorkflow": {
+    "enabled": true,
+    "level": "full",
+    "beadsIntegration": true,
+    "trackingEnabled": true
+  },
+  "project": {
+    "name": "saas-preset-test",
+    "description": "Full-featured SaaS starter with PostgreSQL, full auth, and complete DevOps",
+    "author": "kareemschultz",
+    "techStack": {
+      "runtime": "bun",
+      "framework": "better-t-stack",
+      "database": "postgresql",
+      "auth": [
+        "email",
+        "oauth"
+      ],
+      "testing": [
+        "playwright"
+      ],
+      "deployment": "vercel"
+    }
+  },
+  "constitution": {
+    "strictTypeScript": true,
+    "noAnyTypes": true,
+    "testingRequired": true,
+    "documentationRequired": true,
+    "beadsTracking": true
+  },
+  "mcpServers": {
+    "filesystem": {
+      "name": "Filesystem MCP",
+      "description": "File system access for Claude Code",
+      "config": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem",
+          "/home/kareem/karetech-stack/saas-preset-test"
+        ]
+      }
+    },
+    "github": {
+      "name": "GitHub MCP",
+      "description": "GitHub integration for repositories",
+      "config": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-github"
+        ],
+        "env": {
+          "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}",
+          "GITHUB_REPO_OWNER": "${GITHUB_OWNER}",
+          "GITHUB_REPO_NAME": "saas-preset-test"
+        }
+      }
+    }
+  },
+  "hooks": {
+    "enabled": true,
+    "preCommit": {
+      "enabled": true,
+      "scripts": [
+        "lint",
+        "typecheck",
+        "test"
+      ]
+    },
+    "postCommit": {
+      "enabled": true,
+      "scripts": [
+        "beads-sync"
+      ]
+    },
+    "preWorkSession": {
+      "enabled": true,
+      "scripts": [
+        "pbs-status",
+        "beads-ready"
+      ]
+    }
+  }
+}

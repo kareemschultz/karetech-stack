@@ -99,6 +99,20 @@ const MCP_SERVER_DEFAULTS: Record<McpServer, McpServerConfig> = {
     },
     description: 'PostgreSQL database access for schema and query operations'
   },
+  turso: {
+    command: 'npx',
+    args: ['-y', 'mcp-turso'],
+    env: {
+      TURSO_DATABASE_URL: '${TURSO_DATABASE_URL}',
+      TURSO_AUTH_TOKEN: '${TURSO_AUTH_TOKEN}'
+    },
+    description: 'Turso database access for edge SQLite operations'
+  },
+  sqlite: {
+    command: 'npx',
+    args: ['-y', '@modelcontextprotocol/server-sqlite', './data/local.db'],
+    description: 'SQLite database access for local database operations'
+  },
   playwright: {
     command: 'npx',
     args: ['-y', '@anthropic-ai/mcp-server-playwright'],

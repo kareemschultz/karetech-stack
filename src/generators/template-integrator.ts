@@ -55,10 +55,26 @@ const MCP_SERVER_REGISTRY: Record<McpServer, McpServerConfig> = {
   },
   postgres: {
     name: 'postgres',
-    displayName: 'Database Access',
+    displayName: 'PostgreSQL Database',
     package: '@modelcontextprotocol/server-postgres',
-    description: 'Database queries and schema operations',
+    description: 'PostgreSQL database queries and schema operations',
     requiredEnvVars: ['DATABASE_URL'],
+    capabilities: ['query', 'schema', 'tables']
+  },
+  turso: {
+    name: 'turso',
+    displayName: 'Turso Database',
+    package: 'mcp-turso',
+    description: 'Turso edge database operations',
+    requiredEnvVars: ['TURSO_DATABASE_URL', 'TURSO_AUTH_TOKEN'],
+    capabilities: ['query', 'schema', 'tables']
+  },
+  sqlite: {
+    name: 'sqlite',
+    displayName: 'SQLite Database',
+    package: '@modelcontextprotocol/server-sqlite',
+    description: 'Local SQLite database operations',
+    requiredEnvVars: [],
     capabilities: ['query', 'schema', 'tables']
   },
   playwright: {

@@ -1,0 +1,41 @@
+{
+  "name": "saas",
+  "description": "Full-featured SaaS starter with PostgreSQL, full auth, and complete DevOps",
+  "category": "starter",
+  "database": "postgresql",
+  "auth": [
+    "email",
+    "oauth"
+  ],
+  "apiStyle": "orpc",
+  "componentLibrary": "base-ui",
+  "uiStyle": "maia",
+  "baseColor": "zinc",
+  "accentColor": "blue",
+  "font": "figtree",
+  "icons": "hugeicons",
+  "borderRadius": "default",
+  "menuAccent": "subtle",
+  "testing": [
+    "playwright"
+  ],
+  "unitTesting": true,
+  "exampleTests": true,
+  "docker": true,
+  "cicd": "github-actions",
+  "deployTarget": "vercel",
+  "pbsLevel": "full",
+  "beadsIntegration": true,
+  "claudeCodeHooks": true,
+  "mcpServers": [
+    "filesystem",
+    "github"
+  ],
+  "pwa": false,
+  "analytics": "vercel",
+  "email": "resend",
+  "errorTracking": "sentry",
+  "featureFlags": false,
+  "projectName": "saas-preset-test",
+  "author": "kareemschultz"
+}

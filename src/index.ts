@@ -271,142 +271,15 @@ async function createProject(projectName: string | undefined, options: CliOption
 
   config.author = author;
 
-  // Only show additional wizard steps if not using a preset or if using custom
+  // Use enhanced wizard for configuration
   if (!options.preset || options.preset === 'custom') {
-    // Step 2: Core Stack
-    const database = await select({
-      message: 'Choose your database:',
-      options: [
-        { value: 'postgresql', label: 'PostgreSQL', hint: 'Full-featured relational database' },
-        { value: 'turso', label: 'Turso (SQLite)', hint: 'Edge-optimized SQLite' },
-        { value: 'sqlite', label: 'SQLite', hint: 'Simple file-based database' }
-      ],
-      initialValue: config.database,
-    });
+    console.log(pc.dim('\n🧙‍♂️ Running enhanced configuration wizard...'));
 
-    if (isCancel(database)) {
-      cancel('Operation cancelled');
-      process.exit(0);
-    }
+    // Run the enhanced wizard with all smart features
+    const wizardConfig = await runEnhancedWizard(config, options.preset);
 
-    config.database = database as DatabaseType;
-
-    const auth = await multiselect({
-      message: 'Authentication providers:',
-      options: [
-        { value: 'email', label: 'Email/Password', hint: 'Classic email authentication' },
-        { value: 'oauth', label: 'OAuth', hint: 'Google, GitHub, etc.' },
-        { value: 'magic-links', label: 'Magic Links', hint: 'Passwordless email links' }
-      ],
-      initialValues: config.auth,
-    });
-
-    if (isCancel(auth)) {
-      cancel('Operation cancelled');
-      process.exit(0);
-    }
-
-    config.auth = auth as AuthProvider[];
-
-    // Step 3: Design
-    const uiStyle = await select({
-      message: 'Choose UI style:',
-      options: [
-        { value: 'vega', label: 'Vega', hint: 'Clean and minimal' },
-        { value: 'nova', label: 'Nova', hint: 'Bold and modern' },
-        { value: 'maia', label: 'Maia', hint: 'Rounded and friendly' },
-        { value: 'lyra', label: 'Lyra', hint: 'Editorial and refined' },
-        { value: 'mira', label: 'Mira', hint: 'Sharp and professional' }
-      ],
-      initialValue: config.uiStyle || 'mira',
-    });
-
-    if (isCancel(uiStyle)) {
-      cancel('Operation cancelled');
-      process.exit(0);
-    }
-
-    config.uiStyle = uiStyle as UiStyle;
-
-    // Step 4: Testing
-    const testing = await multiselect({
-      message: 'Testing frameworks:',
-      options: [
-        { value: 'playwright', label: 'Playwright', hint: 'End-to-end testing' },
-        { value: 'puppeteer', label: 'Puppeteer', hint: 'Browser automation' },
-        { value: 'vitest', label: 'Vitest', hint: 'Unit testing' }
-      ],
-      initialValues: config.testing || [],
-    });
-
-    if (isCancel(testing)) {
-      cancel('Operation cancelled');
-      process.exit(0);
-    }
-
-    config.testing = testing as TestingFramework[];
-
-    // Step 5: DevOps
-    const docker = await confirm({
-      message: 'Include Docker configuration?',
-      initialValue: config.docker || false,
-    });
-
-    if (isCancel(docker)) {
-      cancel('Operation cancelled');
-      process.exit(0);
-    }
-
-    config.docker = docker as boolean;
-
-    const cicd = await select({
-      message: 'CI/CD platform:',
-      options: [
-        { value: 'github-actions', label: 'GitHub Actions', hint: 'Integrated with GitHub' },
-        { value: 'vercel', label: 'Vercel', hint: 'Deploy on push' },
-        { value: 'none', label: 'None', hint: 'Manual deployment' }
-      ],
-      initialValue: config.cicd || 'vercel',
-    });
-
-    if (isCancel(cicd)) {
-      cancel('Operation cancelled');
-      process.exit(0);
-    }
-
-    config.cicd = cicd as CiCdPlatform;
-
-    // Step 6: AI Workflow
-    const pbsLevel = await select({
-      message: 'PBS (Plan-Build-Ship) integration level:',
-      options: [
-        { value: 'full', label: 'Full PBS System', hint: 'Complete documentation + Beads + Claude Code' },
-        { value: 'docs', label: 'Documentation Only', hint: 'PBS docs without automation' },
-        { value: 'minimal', label: 'Minimal', hint: 'Basic CLAUDE.md only' },
-        { value: 'none', label: 'None', hint: 'No PBS integration' }
-      ],
-      initialValue: config.pbsLevel || 'minimal',
-    });
-
-    if (isCancel(pbsLevel)) {
-      cancel('Operation cancelled');
-      process.exit(0);
-    }
-
-    config.pbsLevel = pbsLevel as PbsLevel;
-
-    // Step 7: Extras
-    const pwa = await confirm({
-      message: 'Progressive Web App features?',
-      initialValue: config.pwa || false,
-    });
-
-    if (isCancel(pwa)) {
-      cancel('Operation cancelled');
-      process.exit(0);
-    }
-
-    config.pwa = pwa as boolean;
+    // Merge wizard results into config
+    Object.assign(config, wizardConfig);
   }
 
   // Validate complete configuration

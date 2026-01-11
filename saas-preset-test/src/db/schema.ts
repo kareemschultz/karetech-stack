@@ -1,0 +1,65 @@
+import { pgTable, text, timestamp, uuid, boolean, integer } from 'drizzle-orm/pg-core'
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
+import { z } from 'zod'
+// Users table
+export const users = pgTable('users', {
+id: uuid('id').defaultRandom().primaryKey(),
+name: text('name').notNull(),
+email: text('email').notNull().unique(),
+emailVerified: boolean('email_verified').default(false),
+image: text('image'),
+createdAt: timestamp('created_at').defaultNow().notNull(),
+updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+// Posts table (example content)
+export const posts = pgTable('posts', {
+id: uuid('id').defaultRandom().primaryKey(),
+title: text('title').notNull(),
+content: text('content'),
+slug: text('slug').notNull().unique(),
+published: boolean('published').default(false),
+authorId: uuid('author_id').references(() => users.id, { onDelete: 'cascade' }),
+createdAt: timestamp('created_at').defaultNow().notNull(),
+updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+// Sessions table (for Better Auth)
+export const sessions = pgTable('sessions', {
+id: text('id').primaryKey(),
+userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+expiresAt: timestamp('expires_at').notNull(),
+token: text('token').notNull().unique(),
+createdAt: timestamp('created_at').defaultNow().notNull(),
+updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+// Accounts table (for OAuth providers)
+export const accounts = pgTable('accounts', {
+id: uuid('id').defaultRandom().primaryKey(),
+userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+accountType: text('account_type').notNull(),
+githubId: text('github_id'),
+googleId: text('google_id'),
+password: text('password'),
+salt: text('salt'),
+createdAt: timestamp('created_at').defaultNow().notNull(),
+updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+// Verification tokens table (for email verification)
+export const verificationTokens = pgTable('verification_tokens', {
+identifier: text('identifier').notNull(),
+token: text('token').notNull(),
+expires: timestamp('expires').notNull(),
+createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+// Zod schemas for validation
+export const insertUserSchema = createInsertSchema(users)
+export const selectUserSchema = createSelectSchema(users)
+export type User = z.infer<typeof selectUserSchema>
+export type NewUser = z.infer<typeof insertUserSchema>
+export const insertPostSchema = createInsertSchema(posts)
+export const selectPostSchema = createSelectSchema(posts)
+export type Post = z.infer<typeof selectPostSchema>
+export type NewPost = z.infer<typeof insertPostSchema>
+export const insertSessionSchema = createInsertSchema(sessions)
+export const selectSessionSchema = createSelectSchema(sessions)
+export type Session = z.infer<typeof selectSessionSchema>
+export type NewSession = z.infer<typeof insertSessionSchema>

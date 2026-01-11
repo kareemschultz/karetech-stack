@@ -1,0 +1,18 @@
+{
+  "name": "saas-preset-test-test",
+  "description": "Testing workflow for saas-preset-test",
+  "category": "testing",
+  "instructions": "\n# Testing Skill for saas-preset-test\n\nComprehensive testing workflow using playwright.\n\n## Test Types\n- **Unit Tests**: Component and logic testing with Vitest\n- **E2E Tests**: Browser automation with Playwright\n\n\n\n## Test Commands\n- `bun test`: Run unit tests\n- `bun run test:e2e`: Run Playwright E2E tests\n- `bun run test:coverage`: Generate coverage report\n\n## Best Practices\n- Test critical user journeys\n- Maintain 80%+ code coverage\n- Use page object models for E2E tests\n- Mock external dependencies\n",
+  "parameters": {
+    "testType": {
+      "type": "enum",
+      "values": [
+        "unit",
+        "e2e",
+        "integration",
+        "all"
+      ],
+      "description": "Type of tests to run"
+    }
+  }
+}

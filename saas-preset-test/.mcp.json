@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json.schemastore.org/mcp-servers",
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "."
+      ],
+      "description": "File system access for project files"
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "description": "GitHub integration for issues, PRs, and repository operations",
+      "capabilities": {
+        "issues": {
+          "create": "Create new issues with title, body, labels, and assignees",
+          "read": "Read issue details, comments, and metadata",
+          "update": "Update issue title, body, labels, assignees, and state",
+          "close": "Close issues with optional closing comment",
+          "comment": "Add comments to existing issues",
+          "label": "Add, remove, and manage issue labels",
+          "search": "Search issues by query, labels, state, and assignee"
+        },
+        "pullRequests": {
+          "create": "Create pull requests from branch with title and description",
+          "read": "Read PR details, diff, commits, and review status",
+          "review": "Add reviews (approve, request changes, comment)",
+          "merge": "Merge PRs with configurable merge strategy",
+          "comment": "Add line comments and general PR comments",
+          "update": "Update PR title, description, and reviewers"
+        },
+        "repository": {
+          "browse": "Browse repository file structure and directories",
+          "readFiles": "Read file contents at specific ref or branch",
+          "listBranches": "List all branches with protection status",
+          "commits": "View commit history and individual commit details",
+          "compare": "Compare branches and generate diff summaries"
+        }
+      }
+    }
+  }
+}

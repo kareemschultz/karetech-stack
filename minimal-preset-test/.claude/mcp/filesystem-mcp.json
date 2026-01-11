@@ -1,0 +1,51 @@
+{
+  "name": "filesystem",
+  "displayName": "Filesystem Access",
+  "description": "MCP server for file system operations in minimal-preset-test",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+  "env": {},
+  "capabilities": {
+    "tools": [
+      {
+        "name": "read_file",
+        "description": "Read contents of a file"
+      },
+      {
+        "name": "write_file",
+        "description": "Write contents to a file"
+      },
+      {
+        "name": "list_directory",
+        "description": "List contents of a directory"
+      },
+      {
+        "name": "search_files",
+        "description": "Search for files matching a pattern"
+      },
+      {
+        "name": "get_file_info",
+        "description": "Get metadata about a file"
+      }
+    ],
+    "resources": [
+      {
+        "name": "file://.",
+        "description": "Project root directory"
+      }
+    ]
+  },
+  "allowedPaths": [
+    ".",
+    "src",
+    "tests",
+    "docs",
+    "scripts"
+  ],
+  "deniedPaths": [
+    ".env",
+    ".env.local",
+    "node_modules",
+    ".git"
+  ]
+}
