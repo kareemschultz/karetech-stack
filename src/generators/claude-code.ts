@@ -12,6 +12,12 @@ import { promises as fs } from 'fs';
 import { join, resolve } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import { ProjectConfig, McpServer } from '../types';
+import {
+  getDatabaseMcpConfig,
+  generateMcpServerConfig,
+  DATABASE_MCP_REGISTRY
+} from '../mcp/database-integration';
+import { generateDatabaseMcpConfig } from './database-mcp';
 
 /**
  * Claude Code integration configurations based on AI workflow level
@@ -49,6 +55,7 @@ const CLAUDE_CODE_CONFIGS = {
 
 /**
  * MCP Server configurations based on project needs
+ * Database MCP servers (postgres, sqlite, turso) are now managed by database-integration module
  */
 const MCP_SERVER_CONFIGS = {
   filesystem: {
@@ -72,15 +79,38 @@ const MCP_SERVER_CONFIGS = {
       }
     }
   },
+  // Database MCP servers - configurations from database-integration module
   postgres: {
-    name: 'PostgreSQL MCP',
-    description: 'Database access and querying',
-    package: '@modelcontextprotocol/server-postgres',
+    name: DATABASE_MCP_REGISTRY.postgresql.displayName,
+    description: DATABASE_MCP_REGISTRY.postgresql.description,
+    package: DATABASE_MCP_REGISTRY.postgresql.package.package,
     config: {
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-postgres'],
+      command: DATABASE_MCP_REGISTRY.postgresql.command,
+      args: [...DATABASE_MCP_REGISTRY.postgresql.args],
       env: {
-        DATABASE_URL: 'postgresql://user:password@localhost:5432/database'
+        DATABASE_URL: DATABASE_MCP_REGISTRY.postgresql.env.defaults.DATABASE_URL
+      }
+    }
+  },
+  sqlite: {
+    name: DATABASE_MCP_REGISTRY.sqlite.displayName,
+    description: DATABASE_MCP_REGISTRY.sqlite.description,
+    package: DATABASE_MCP_REGISTRY.sqlite.package.package,
+    config: {
+      command: DATABASE_MCP_REGISTRY.sqlite.command,
+      args: [...DATABASE_MCP_REGISTRY.sqlite.args]
+    }
+  },
+  turso: {
+    name: DATABASE_MCP_REGISTRY.turso.displayName,
+    description: DATABASE_MCP_REGISTRY.turso.description,
+    package: DATABASE_MCP_REGISTRY.turso.package.package,
+    config: {
+      command: DATABASE_MCP_REGISTRY.turso.command,
+      args: [...DATABASE_MCP_REGISTRY.turso.args],
+      env: {
+        TURSO_DATABASE_URL: DATABASE_MCP_REGISTRY.turso.env.defaults.TURSO_DATABASE_URL,
+        TURSO_AUTH_TOKEN: DATABASE_MCP_REGISTRY.turso.env.defaults.TURSO_AUTH_TOKEN
       }
     }
   },
@@ -137,40 +167,56 @@ function generateClaudeCodeSettings(config: ProjectConfig): any {
     }
   };
 
-  // MCP configuration is now externalized to .mcp.json (Task 1.4)
-  // Reference the external configuration file instead of embedding
+  // MCP configuration with comprehensive database support
+  // Includes enhanced database MCP integration for PostgreSQL, SQLite, and Turso
   if (claudeConfig.mcpRequired && config.mcpServers && config.mcpServers.length > 0) {
-    settings.mcp = {
-      configFile: '.mcp.json',
-      servers: config.mcpServers,
-      capabilities: {
-        ...(config.mcpServers.includes('github') && {
-          github: {
-            issues: true,
-            pullRequests: true,
-            repository: true
-          }
-        }),
-        ...(config.mcpServers.includes('postgres') && config.database === 'postgresql' && {
-          postgres: {
-            query: true,
-            schema: true
-          }
-        }),
-        ...(config.mcpServers.includes('playwright') && {
-          playwright: {
-            browserAutomation: true,
-            e2eTesting: true
-          }
-        }),
-        ...(config.mcpServers.includes('filesystem') && {
-          filesystem: {
-            read: true,
-            write: true
-          }
-        })
+    settings.mcpServers = {};
+
+    config.mcpServers.forEach(serverType => {
+      const serverConfig = MCP_SERVER_CONFIGS[serverType];
+      if (serverConfig) {
+        settings.mcpServers[serverType] = {
+          name: serverConfig.name,
+          description: serverConfig.description,
+          config: { ...serverConfig.config }
+        };
+
+        // Customize server configs based on project
+        if (serverType === 'filesystem') {
+          settings.mcpServers[serverType].config.args = [
+            '-y', '@modelcontextprotocol/server-filesystem',
+            resolve(process.cwd(), config.projectName)
+          ];
+        } else if (serverType === 'postgres' && config.database === 'postgresql') {
+          // PostgreSQL MCP server configuration
+          settings.mcpServers[serverType].config.args = [
+            '-y', '@modelcontextprotocol/server-postgres',
+            '${DATABASE_URL}'
+          ];
+          settings.mcpServers[serverType].config.env = {
+            DATABASE_URL: `postgresql://postgres:postgres@localhost:5432/${config.projectName}`
+          };
+        } else if (serverType === 'sqlite' && config.database === 'sqlite') {
+          // SQLite MCP server configuration
+          settings.mcpServers[serverType].config.args = [
+            '-y', '@modelcontextprotocol/server-sqlite',
+            `./data/${config.projectName}.db`
+          ];
+        } else if (serverType === 'turso' && config.database === 'turso') {
+          // Turso MCP server configuration
+          settings.mcpServers[serverType].config.env = {
+            TURSO_DATABASE_URL: '${TURSO_DATABASE_URL}',
+            TURSO_AUTH_TOKEN: '${TURSO_AUTH_TOKEN}'
+          };
+        } else if (serverType === 'github') {
+          settings.mcpServers[serverType].config.env = {
+            GITHUB_PERSONAL_ACCESS_TOKEN: '${GITHUB_TOKEN}',
+            GITHUB_REPO_OWNER: '${GITHUB_OWNER}',
+            GITHUB_REPO_NAME: config.projectName
+          };
+        }
       }
-    };
+    });
   }
 
   // Add hooks configuration if enabled
@@ -851,6 +897,12 @@ export async function generateClaudeCodeConfiguration(projectDir: string, config
       'utf-8'
     );
 
+    // Generate database MCP configuration if database is configured
+    if (config.database !== 'none') {
+      console.log('🗄️  Generating database MCP configuration...');
+      await generateDatabaseMcpConfig(projectDir, config);
+    }
+
     // Generate hook scripts if enabled
     if (config.claudeCodeHooks) {
       console.log('🔗 Generating hook scripts...');
@@ -952,10 +1004,33 @@ export function validateClaudeCodeConfig(config: ProjectConfig): string[] {
     warnings.push('⚠️  Claude Code hooks enabled but PBS level is none');
   }
 
+  // Database MCP server validations
   if (config.mcpServers.includes('postgres') && config.database !== 'postgresql') {
     warnings.push('⚠️  PostgreSQL MCP server selected but database is not PostgreSQL');
   }
 
+  if (config.mcpServers.includes('sqlite') && config.database !== 'sqlite') {
+    warnings.push('⚠️  SQLite MCP server selected but database is not SQLite');
+  }
+
+  if (config.mcpServers.includes('turso') && config.database !== 'turso') {
+    warnings.push('⚠️  Turso MCP server selected but database is not Turso');
+  }
+
+  // Suggest appropriate database MCP server if database is configured but MCP isn't
+  if (config.database === 'postgresql' && !config.mcpServers.includes('postgres')) {
+    warnings.push('💡 Consider adding PostgreSQL MCP server for AI-assisted database operations');
+  }
+
+  if (config.database === 'sqlite' && !config.mcpServers.includes('sqlite')) {
+    warnings.push('💡 Consider adding SQLite MCP server for AI-assisted database operations');
+  }
+
+  if (config.database === 'turso' && !config.mcpServers.includes('turso')) {
+    warnings.push('💡 Consider adding Turso MCP server for AI-assisted database operations');
+  }
+
+  // Testing MCP validation
   if (config.mcpServers.includes('playwright') && !config.testing.includes('playwright')) {
     warnings.push('⚠️  Playwright MCP server selected but Playwright testing not enabled');
   }

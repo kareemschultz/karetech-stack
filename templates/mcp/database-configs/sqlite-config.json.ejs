@@ -1,0 +1,52 @@
+<%#
+  SQLite MCP Server Configuration Template
+  Package: @modelcontextprotocol/server-sqlite
+  Official MCP server for local SQLite database access
+-%>
+{
+  "$schema": "https://json.schemastore.org/mcp-config.json",
+  "name": "sqlite",
+  "displayName": "SQLite MCP Server",
+  "description": "Direct access to local SQLite database files for querying and schema analysis",
+  "databaseType": "sqlite",
+  "package": {
+    "name": "@modelcontextprotocol/server-sqlite",
+    "version": "latest",
+    "official": true,
+    "repository": "https://github.com/modelcontextprotocol/servers"
+  },
+  "configuration": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-sqlite",
+      "./data/<%= projectName %>.db"
+    ]
+  },
+  "capabilities": [
+    "Local database file access",
+    "Schema inspection and querying",
+    "Database structure analysis",
+    "Direct file-based operations"
+  ],
+  "securityNotes": [
+    "Ensure database file permissions are properly set",
+    "Use absolute paths in production environments",
+    "Back up database before AI-assisted operations",
+    "Consider file locking for concurrent access"
+  ],
+  "readOnly": false,
+  "projectConfig": {
+    "projectName": "<%= projectName %>",
+    "author": "<%= author %>",
+    "database": "<%= database %>"
+  },
+  "fileConfig": {
+    "defaultPath": "./data/<%= projectName %>.db",
+    "alternativePaths": [
+      "./prisma/dev.db",
+      "./drizzle/local.db",
+      "./<%= projectName %>.db"
+    ]
+  }
+}

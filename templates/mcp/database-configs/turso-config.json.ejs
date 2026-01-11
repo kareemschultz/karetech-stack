@@ -1,0 +1,54 @@
+<%#
+  Turso MCP Server Configuration Template
+  Package: mcp-turso
+  Community MCP server for Turso-hosted libSQL databases
+-%>
+{
+  "$schema": "https://json.schemastore.org/mcp-config.json",
+  "name": "turso",
+  "displayName": "Turso MCP Server",
+  "description": "Access to Turso-hosted libSQL databases for cloud-native SQLite operations",
+  "databaseType": "turso",
+  "package": {
+    "name": "mcp-turso",
+    "version": "latest",
+    "official": false,
+    "author": "nbbaier",
+    "repository": "https://github.com/nbbaier/mcp-turso"
+  },
+  "configuration": {
+    "command": "npx",
+    "args": [
+      "-y",
+      "mcp-turso"
+    ],
+    "env": {
+      "TURSO_DATABASE_URL": "${TURSO_DATABASE_URL}",
+      "TURSO_AUTH_TOKEN": "${TURSO_AUTH_TOKEN}"
+    }
+  },
+  "capabilities": [
+    "Cloud-hosted libSQL access",
+    "SQL query execution",
+    "Schema management and inspection",
+    "Edge-optimized database operations",
+    "Global replication support"
+  ],
+  "securityNotes": [
+    "Store auth token securely - never commit to version control",
+    "Use environment-specific tokens (dev/staging/prod)",
+    "Rotate tokens regularly for security",
+    "Enable audit logging in Turso dashboard"
+  ],
+  "readOnly": false,
+  "projectConfig": {
+    "projectName": "<%= projectName %>",
+    "author": "<%= author %>",
+    "database": "<%= database %>"
+  },
+  "tursoConfig": {
+    "dashboardUrl": "https://turso.tech/app",
+    "docsUrl": "https://docs.turso.tech",
+    "connectionStringFormat": "libsql://<%= projectName %>-<%= author %>.turso.io"
+  }
+}
