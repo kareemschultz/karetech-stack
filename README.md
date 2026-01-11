@@ -4,7 +4,7 @@
 
 ![KareTech Stack Logo](https://img.shields.io/badge/🔧_KareTech-Stack-4F46E5?style=for-the-badge&labelColor=1e293b&color=4F46E5)
 
-**Enhanced Better-T-Stack scaffold with PBS, testing, and DevOps built-in**
+**Enhanced Better-T-Stack scaffold with AI-ready structure, testing, and DevOps built-in**
 
 [![npm version](https://img.shields.io/npm/v/create-karetech-stack?style=flat-square&color=4F46E5&logo=npm)](https://www.npmjs.com/package/create-karetech-stack)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
@@ -52,6 +52,20 @@ graph LR
     style A fill:#4F46E5,stroke:#333,color:#fff
     style C fill:#10B981,stroke:#333,color:#fff
 ```
+
+### ✅ **Core Value Delivered**
+
+**What you get immediately (v0.1.0):**
+- 🚀 **15x faster scaffolding** - Production-ready projects in 2 minutes
+- 🎨 **Professional appearance** - Beautiful themes applied automatically
+- 🧪 **Testing configured** - Playwright E2E and Vitest unit testing ready
+- 🐳 **DevOps included** - Docker + GitHub Actions + deployment configs
+- 📋 **AI-ready structure** - PBS docs and `.claude/` directory for manual setup
+
+**What requires manual setup:**
+- 🤖 **AI workflow automation** - Structure provided, configuration needed
+- 💎 **Beads integration** - User runs `bd init` after generation
+- 🔧 **Claude Code hooks** - User configures agents and skills
 
 ---
 
@@ -130,32 +144,80 @@ docker run -p 3000:3000 my-app
 
 ---
 
-## 🔧 **Features**
-
-### 🎯 **Enhanced Better-T-Stack Core**
+## 🔧 **What's Working Now (v0.1.0)**
 
 <table>
 <tr>
 <td width="50%">
 
-**🏗️ Foundation**
+**🏗️ Core Stack (100% Working)**
 - ⚡ **Bun** - Ultra-fast runtime
 - 🌐 **Hono** - Edge-optimized API server
 - 🗄️ **Drizzle ORM** - Type-safe database
 - 🔐 **Better Auth** - Complete auth solution
 - 🧭 **TanStack Router** - File-based routing
-- 🎨 **shadcn/ui v4** - Beautiful components
+- 🎨 **Base UI + shadcn/ui** - Beautiful components
 
 </td>
 <td width="50%">
 
-**🚀 KareTech Enhancements**
-- 🎨 **5 Visual Themes** - Professional defaults
-- 🧪 **Testing Ready** - Playwright + Vitest
-- 🐳 **Production Docker** - <200MB images
-- ⚙️ **CI/CD Built-in** - GitHub Actions
-- 🤖 **AI Workflow** - PBS + Claude Code
-- 📦 **6 Quick Presets** - Skip configuration
+**🚀 Scaffolding Enhancements (100% Working)**
+- 🎨 **5 Visual Themes** - Maia, Nova, Lyra, Vega, Default
+- 🧪 **Testing Templates** - Playwright + Vitest configured
+- 🐳 **Production Docker** - Multi-stage builds <200MB
+- ⚙️ **CI/CD Templates** - GitHub Actions ready
+- 📦 **6 Quick Presets** - SaaS, ecommerce, blog, etc.
+- ⚡ **15x Faster Setup** - 2 minutes vs 30+ manual
+
+</td>
+</tr>
+</table>
+
+## 🤖 **AI-Ready (Structure Provided, User Configures)**
+
+<table>
+<tr>
+<td width="50%">
+
+**📋 Documentation Templates**
+- 📚 **PBS Documentation** - Complete methodology docs
+- 📖 **CLAUDE.md** - AI workflow entry point
+- 📊 **PROJECT_STATUS.md** - Status tracking template
+- ⚖️ **constitution.md** - Project principles
+
+</td>
+<td width="50%">
+
+**🔧 Directory Structure**
+- 📁 **.claude/** - Settings.json placeholder
+- 📋 **Integration guides** - Setup instructions
+- 🤖 **Ready for hooks** - Manual configuration needed
+- 💎 **Beads-ready** - User runs `bd init`
+
+</td>
+</tr>
+</table>
+
+## 🗺️ **Roadmap (Future Releases)**
+
+<table>
+<tr>
+<td width="50%">
+
+**🔮 Planned Features**
+- **v0.2.0**: Pre-configured MCP servers
+- **v0.3.0**: Automated Beads integration
+- **v0.4.0**: Skills library for workflows
+- **v0.5.0**: Full PBS automation
+
+</td>
+<td width="50%">
+
+**🎯 Vision**
+- **Automated workflows** (currently manual)
+- **Pre-built agents** (currently templates)
+- **One-click AI setup** (currently user-configured)
+- **Plugin ecosystem** (planned architecture)
 
 </td>
 </tr>
@@ -201,25 +263,33 @@ graph TD
 - **Deployment**: Vercel, Netlify, Railway configs included
 - **Monitoring**: Error tracking, analytics, performance monitoring
 
-### 🤖 **AI-First Workflow**
+### 📋 **PBS Documentation Structure**
+
+Generated projects include complete PBS methodology documentation and structure:
 
 ```mermaid
 graph LR
     A[📝 Plan] --> B[🔨 Build] --> C[🚢 Ship]
 
-    A --> A1[📋 Beads Issues]
-    A --> A2[📑 Spec Kit]
+    A --> A1[📋 PBS Docs Generated]
+    A --> A2[📑 Manual Planning]
 
-    B --> B1[🤖 Claude Code]
-    B --> B2[🔧 Auto-generated]
+    B --> B1[🤖 Claude Ready Structure]
+    B --> B2[🔧 User Configures]
 
-    C --> C1[🚀 CI/CD Deploy]
-    C --> C2[📊 Monitoring]
+    C --> C1[🚀 CI/CD Templates]
+    C --> C2[📊 Monitoring Ready]
 
     style A fill:#F59E0B,color:#fff
-    style B fill:#4F46E5,color:#fff
+    style B fill:#F59E0B,color:#fff
     style C fill:#10B981,color:#fff
 ```
+
+**What You Get:**
+- 📚 Complete PBS methodology documentation
+- 📁 `.claude/` directory structure with settings templates
+- 📖 `CLAUDE.md` entry point with integration instructions
+- 🔧 Ready to configure with your AI tools (manual setup required)
 
 ---
 
@@ -713,7 +783,7 @@ bun run build
 <td><strong>🤖 AI Integration</strong></td>
 <td>None</td>
 <td>None</td>
-<td>🧠 <strong>Full PBS workflow</strong></td>
+<td>📋 <strong>AI-ready structure</strong></td>
 </tr>
 <tr>
 <td><strong>⏱️ Setup Time</strong></td>
@@ -766,7 +836,7 @@ bun run build
 <td><strong>🤖 AI Workflow</strong></td>
 <td>None</td>
 <td>None</td>
-<td>🧠 <strong>Complete PBS system</strong></td>
+<td>📋 <strong>PBS docs + structure</strong></td>
 </tr>
 </table>
 
