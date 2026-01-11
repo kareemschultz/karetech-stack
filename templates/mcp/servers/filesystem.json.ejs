@@ -1,0 +1,63 @@
+{
+  "name": "filesystem",
+  "displayName": "Filesystem Server",
+  "description": "Provides file system access for code editing and navigation",
+  "package": "@modelcontextprotocol/server-filesystem",
+  "version": "^1.0.0",
+
+  "command": "npx",
+  "args": [
+    "-y",
+    "@modelcontextprotocol/server-filesystem",
+    "<%= projectDir || './' %>"
+  ],
+  "env": {},
+
+  "capabilities": [
+    "read_file",
+    "write_file",
+    "list_directory",
+    "create_directory",
+    "delete_file",
+    "move_file",
+    "search_files"
+  ],
+
+  "autoApprove": [
+    "read_file",
+    "list_directory",
+    "search_files"
+  ],
+
+  "requiresApproval": [
+    "write_file",
+    "create_directory",
+    "delete_file",
+    "move_file"
+  ],
+
+  "restrictions": {
+    "allowedPaths": [
+      "src/**/*",
+      "tests/**/*",
+      "docs/**/*",
+      "*.json",
+      "*.ts",
+      "*.tsx",
+      "*.md"
+    ],
+    "blockedPaths": [
+      ".env*",
+      "node_modules/**/*",
+      ".git/**/*",
+      "*.key",
+      "*.pem"
+    ]
+  },
+
+  "healthCheck": {
+    "command": "ls",
+    "args": ["-la", "./"],
+    "expectedOutput": "src"
+  }
+}

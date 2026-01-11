@@ -1,0 +1,65 @@
+{
+  "name": "github",
+  "displayName": "GitHub Server",
+  "description": "Provides GitHub repository and issue management capabilities",
+  "package": "@modelcontextprotocol/server-github",
+  "version": "^1.0.0",
+
+  "command": "npx",
+  "args": [
+    "-y",
+    "@modelcontextprotocol/server-github"
+  ],
+  "env": {
+    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+  },
+
+  "requiredEnv": [
+    "GITHUB_TOKEN"
+  ],
+
+  "capabilities": [
+    "get_issue",
+    "list_issues",
+    "create_issue",
+    "update_issue",
+    "close_issue",
+    "get_pull_request",
+    "list_pull_requests",
+    "create_pull_request",
+    "search_code",
+    "get_repository",
+    "list_branches"
+  ],
+
+  "autoApprove": [
+    "get_issue",
+    "list_issues",
+    "search_code",
+    "get_repository",
+    "list_branches",
+    "get_pull_request",
+    "list_pull_requests"
+  ],
+
+  "requiresApproval": [
+    "create_issue",
+    "update_issue",
+    "close_issue",
+    "create_pull_request"
+  ],
+
+  "permissions": {
+    "tokenScopes": [
+      "repo",
+      "read:org",
+      "read:project"
+    ]
+  },
+
+  "healthCheck": {
+    "method": "api_call",
+    "endpoint": "/user",
+    "expectedStatus": 200
+  }
+}
