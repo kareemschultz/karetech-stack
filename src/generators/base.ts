@@ -380,6 +380,12 @@ export async function generateBaseProject(config: ProjectConfig): Promise<void> 
     }
   }
 
+  // Integrate MCP and Claude Code configurations
+  if (config.pbsLevel !== 'none' || config.mcpServers.length > 0) {
+    const { integrateTemplates } = await import('./template-integrator');
+    await integrateTemplates(projectDir, config, context);
+  }
+
   console.log(`✅ Base project structure generated in ${projectDir}`);
 }
 
@@ -402,6 +408,10 @@ export function validateTemplateStructure(templatesDir: string): string[] {
     'database/turso',
     'database/sqlite',
     'auth',
+    'auth/email',
+    'auth/oauth',
+    'auth/github',
+    'auth/magic-links',
     'testing/playwright',
     'testing/vitest',
     'testing/puppeteer',
@@ -409,6 +419,18 @@ export function validateTemplateStructure(templatesDir: string): string[] {
     'devops/github',
     'mcp',
     'mcp/servers',
+    // MCP server-specific templates
+    'mcp/postgresql',
+    'mcp/turso',
+    'mcp/sqlite',
+    'mcp/github',
+    'mcp/playwright',
+    'mcp/filesystem',
+    // Claude Code templates
+    'claude-code/settings',
+    'claude-code/hooks',
+    'claude-code/agents',
+    'claude-code/skills',
     'pbs'
   ];
 

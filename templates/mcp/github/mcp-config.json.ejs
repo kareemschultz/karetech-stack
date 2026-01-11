@@ -1,0 +1,45 @@
+{
+  "name": "github",
+  "displayName": "GitHub Integration",
+  "description": "MCP server for GitHub operations in <%= projectName %>",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-github"],
+  "env": {
+    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+  },
+  "capabilities": {
+    "tools": [
+      {
+        "name": "create_issue",
+        "description": "Create a new GitHub issue"
+      },
+      {
+        "name": "list_issues",
+        "description": "List issues in the repository"
+      },
+      {
+        "name": "create_pull_request",
+        "description": "Create a pull request"
+      },
+      {
+        "name": "get_file_contents",
+        "description": "Get contents of a file from the repository"
+      },
+      {
+        "name": "search_code",
+        "description": "Search for code in the repository"
+      }
+    ],
+    "resources": [
+      {
+        "name": "repo://<%= author %>/<%= projectName %>",
+        "description": "Repository information"
+      }
+    ]
+  },
+  "repository": {
+    "owner": "<%= author %>",
+    "name": "<%= projectName %>",
+    "defaultBranch": "main"
+  }
+}

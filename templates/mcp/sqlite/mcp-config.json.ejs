@@ -1,0 +1,36 @@
+{
+  "name": "sqlite",
+  "displayName": "SQLite Database",
+  "description": "MCP server for SQLite database operations in <%= projectName %>",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-sqlite", "./data/local.db"],
+  "env": {},
+  "capabilities": {
+    "tools": [
+      {
+        "name": "query",
+        "description": "Execute SQL queries on SQLite database"
+      },
+      {
+        "name": "schema",
+        "description": "Get database schema information"
+      },
+      {
+        "name": "tables",
+        "description": "List all tables in the database"
+      }
+    ],
+    "resources": [
+      {
+        "name": "schema://main",
+        "description": "Database schema for main database"
+      }
+    ]
+  },
+  "drizzleIntegration": {
+    "schemaPath": "src/db/schema.ts",
+    "migrationsPath": "drizzle",
+    "configPath": "drizzle.config.ts",
+    "driver": "better-sqlite3"
+  }
+}

@@ -1,0 +1,122 @@
+<%- JSON.stringify({
+  workspaceFolder: ".",
+  projectName: projectName,
+  version: "1.0.0",
+
+  aiWorkflow: {
+    enabled: pbsLevel !== 'none',
+    level: pbsLevel,
+    beadsIntegration: beadsIntegration,
+    trackingEnabled: pbsLevel === 'full'
+  },
+
+  project: {
+    name: projectName,
+    description: description,
+    author: author,
+    techStack: {
+      runtime: "bun",
+      framework: "better-t-stack",
+      database: database,
+      auth: auth,
+      testing: testing,
+      deployment: deployTarget
+    }
+  },
+
+  constitution: {
+    strictTypeScript: true,
+    noAnyTypes: true,
+    testingRequired: unitTesting || testing.length > 0,
+    documentationRequired: pbsLevel !== 'none',
+    beadsTracking: beadsIntegration
+  },
+
+  mcpServers: mcpServers && mcpServers.length > 0 ? (function() {
+    var servers = {};
+    if (mcpServers.includes('filesystem')) {
+      servers.filesystem = {
+        command: "npx",
+        args: ["-y", "@modelcontextprotocol/server-filesystem", "."],
+        description: "File system access for " + projectName
+      };
+    }
+    if (mcpServers.includes('github')) {
+      servers.github = {
+        command: "npx",
+        args: ["-y", "@modelcontextprotocol/server-github"],
+        env: {
+          GITHUB_PERSONAL_ACCESS_TOKEN: "${GITHUB_TOKEN}"
+        },
+        description: "GitHub integration for repository operations"
+      };
+    }
+    if (mcpServers.includes('postgres')) {
+      if (database === 'postgresql') {
+        servers.postgres = {
+          command: "npx",
+          args: ["-y", "@modelcontextprotocol/server-postgres"],
+          env: {
+            DATABASE_URL: "${DATABASE_URL}"
+          },
+          description: "PostgreSQL database access and querying"
+        };
+      } else if (database === 'turso') {
+        servers.turso = {
+          command: "npx",
+          args: ["-y", "@modelcontextprotocol/server-sqlite", "--url", "${TURSO_DATABASE_URL}"],
+          env: {
+            TURSO_AUTH_TOKEN: "${TURSO_AUTH_TOKEN}"
+          },
+          description: "Turso database access via libSQL"
+        };
+      } else if (database === 'sqlite') {
+        servers.sqlite = {
+          command: "npx",
+          args: ["-y", "@modelcontextprotocol/server-sqlite", "./data/local.db"],
+          description: "SQLite database access"
+        };
+      }
+    }
+    if (mcpServers.includes('playwright')) {
+      servers.playwright = {
+        command: "npx",
+        args: ["-y", "@anthropic-ai/mcp-server-playwright"],
+        description: "Browser automation for E2E testing"
+      };
+    }
+    return servers;
+  })() : {},
+
+  hooks: claudeCodeHooks ? {
+    enabled: true,
+    preCommit: {
+      enabled: true,
+      scripts: ["lint", "typecheck"].concat(unitTesting || testing.length > 0 ? ["test"] : [])
+    },
+    postCommit: {
+      enabled: beadsIntegration,
+      scripts: beadsIntegration ? ["beads-sync"] : []
+    },
+    preWorkSession: {
+      enabled: pbsLevel === 'full',
+      scripts: pbsLevel === 'full' ? ["pbs-status", "beads-ready"] : []
+    }
+  } : undefined,
+
+  agents: {
+    default: projectName + "-dev",
+    available: [projectName + "-dev"]
+      .concat(testing.length > 0 ? [projectName + "-tester"] : [])
+      .concat(database !== 'none' ? [projectName + "-db"] : [])
+  },
+
+  commands: {
+    available: ["status", "setup", "deploy"]
+  },
+
+  skills: {
+    available: [projectName + "-dev"]
+      .concat(testing.length > 0 ? [projectName + "-test"] : [])
+  }
+}, null, 2) %>

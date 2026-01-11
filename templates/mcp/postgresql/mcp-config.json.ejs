@@ -1,0 +1,38 @@
+{
+  "name": "postgres",
+  "displayName": "PostgreSQL Database",
+  "description": "MCP server for PostgreSQL database operations in <%= projectName %>",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-postgres"],
+  "env": {
+    "DATABASE_URL": "${DATABASE_URL}"
+  },
+  "capabilities": {
+    "tools": [
+      {
+        "name": "query",
+        "description": "Execute read-only SQL queries"
+      },
+      {
+        "name": "schema",
+        "description": "Get database schema information"
+      },
+      {
+        "name": "tables",
+        "description": "List all tables in the database"
+      }
+    ],
+    "resources": [
+      {
+        "name": "schema://public",
+        "description": "Database schema for public schema"
+      }
+    ]
+  },
+  "connectionString": "postgresql://<%= projectName %>:password@localhost:5432/<%= projectName %>",
+  "drizzleIntegration": {
+    "schemaPath": "src/db/schema.ts",
+    "migrationsPath": "drizzle",
+    "configPath": "drizzle.config.ts"
+  }
+}

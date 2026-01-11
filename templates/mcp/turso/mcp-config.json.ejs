@@ -1,0 +1,39 @@
+{
+  "name": "turso",
+  "displayName": "Turso Database",
+  "description": "MCP server for Turso/libSQL database operations in <%= projectName %>",
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-sqlite", "--url", "${TURSO_DATABASE_URL}"],
+  "env": {
+    "TURSO_DATABASE_URL": "${TURSO_DATABASE_URL}",
+    "TURSO_AUTH_TOKEN": "${TURSO_AUTH_TOKEN}"
+  },
+  "capabilities": {
+    "tools": [
+      {
+        "name": "query",
+        "description": "Execute SQL queries on Turso database"
+      },
+      {
+        "name": "schema",
+        "description": "Get database schema information"
+      },
+      {
+        "name": "tables",
+        "description": "List all tables in the database"
+      }
+    ],
+    "resources": [
+      {
+        "name": "schema://main",
+        "description": "Database schema for main database"
+      }
+    ]
+  },
+  "drizzleIntegration": {
+    "schemaPath": "src/db/schema.ts",
+    "migrationsPath": "drizzle",
+    "configPath": "drizzle.config.ts",
+    "driver": "turso"
+  }
+}

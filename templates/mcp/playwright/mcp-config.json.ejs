@@ -1,0 +1,42 @@
+{
+  "name": "playwright",
+  "displayName": "Playwright Browser Automation",
+  "description": "MCP server for Playwright E2E testing in <%= projectName %>",
+  "command": "npx",
+  "args": ["-y", "@anthropic-ai/mcp-server-playwright"],
+  "env": {},
+  "capabilities": {
+    "tools": [
+      {
+        "name": "navigate",
+        "description": "Navigate to a URL"
+      },
+      {
+        "name": "screenshot",
+        "description": "Take a screenshot of the current page"
+      },
+      {
+        "name": "click",
+        "description": "Click on an element"
+      },
+      {
+        "name": "fill",
+        "description": "Fill in a form field"
+      },
+      {
+        "name": "evaluate",
+        "description": "Execute JavaScript in the browser context"
+      },
+      {
+        "name": "get_text",
+        "description": "Get text content of an element"
+      }
+    ],
+    "resources": []
+  },
+  "testingConfig": {
+    "baseUrl": "http://localhost:3000",
+    "testsDir": "<% if (testing.includes('playwright')) { %>tests/e2e<% } else { %>tests<% } %>",
+    "configPath": "playwright.config.ts"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "<%= projectName %>-dev",
+  "description": "Development workflow for <%= projectName %>",
+  "category": "development",
+  "instructions": "# <%= projectName %> Development Skill\n\nThis skill provides specialized development workflows for <%= projectName %>.\n\n## Project Configuration\n- **Tech Stack**: Better-T-Stack + <%= database %> + <%= auth.length > 0 ? auth.join('/') : 'no-auth' %>\n- **UI**: <%= uiStyle %> theme with <%= baseColor %>/<%= accentColor %>\n- **Testing**: <%= testing.length > 0 ? testing.join(' + ') : 'Minimal' %>\n- **Deployment**: <%= deployTarget %>\n\n## Constitutional Requirements\n- 100% TypeScript strict mode compliance\n- No `any` types allowed\n- All changes must pass compilation\n- Follow Better-T-Stack conventions<%= beadsIntegration ? '\n- Track all work in Beads' : '' %>\n\n## Workflow Commands\n1. **Start Development**: Check status, review issues, start work\n2. **Feature Development**: Plan, implement, test, document\n3. **Quality Assurance**: Lint, test, type check, review\n4. **Deployment Prep**: Build, validate, prepare release\n\nUse this skill to maintain development standards and workflow consistency.",
+
+  "parameters": {
+    "action": {
+      "type": "enum",
+      "values": ["start", "feature", "quality", "deploy"],
+      "description": "Development action to perform"
+    },
+    "component": {
+      "type": "string",
+      "optional": true,
+      "description": "Component or feature name"
+    }
+  },
+
+  "mcpIntegration": {
+    "servers": [<%= mcpServers.map(s => `"${s}"`).join(', ') %>],
+    "autoConnect": true
+  }
+}
