@@ -18,12 +18,32 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url, token }) => {
-      // TODO: Implement email sending
-      console.log(`Password reset for ${user.email}: ${url}`)
+      // SECURITY: DO NOT log password reset URLs in production
+      // TODO: Implement proper email provider (Resend, SendGrid, etc.)
+
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('🔐 DEVELOPMENT ONLY - Password reset URL (NEVER log in production):');
+        console.warn('Email:', user.email);
+        console.warn('Reset URL:', url);
+      }
+
+      // Placeholder for email service integration
+      // Example: await sendEmail({ to: user.email, subject: 'Password Reset', html: template })
+      throw new Error('Email service not configured. Please implement sendResetPassword in auth config.');
     },
     sendVerificationEmail: async ({ user, url, token }) => {
-      // TODO: Implement email sending
-      console.log(`Email verification for ${user.email}: ${url}`)
+      // SECURITY: DO NOT log verification URLs in production
+      // TODO: Implement proper email provider (Resend, SendGrid, etc.)
+
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('🔐 DEVELOPMENT ONLY - Verification URL (NEVER log in production):');
+        console.warn('Email:', user.email);
+        console.warn('Verification URL:', url);
+      }
+
+      // Placeholder for email service integration
+      // Example: await sendEmail({ to: user.email, subject: 'Verify Email', html: template })
+      throw new Error('Email service not configured. Please implement sendVerificationEmail in auth config.');
     },
   },<% } %>
 

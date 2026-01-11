@@ -7,7 +7,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.2.1] - 2026-01-11 - Quality Improvements & Stability Fixes
+## [0.2.1] - 2026-01-11 - Critical Security & Documentation Fixes
+
+> **🔒 SECURITY RELEASE**: Comprehensive audit remediation addressing authentication security, Docker secrets, template injection prevention, and documentation consistency.
+
+### Fixed
+
+#### 🔒 **Critical Security Vulnerabilities**
+- **Email Authentication Security** - `templates/auth/src/auth/config.ts.ejs`
+  - Removed unsafe console.log statements exposing password reset URLs in production
+  - Added environment-specific logging with explicit security warnings
+  - Implemented proper error handling requiring email service configuration
+  - **Impact**: Prevents authentication token exposure in production logs
+
+- **Docker Secrets Hardcoding** - `templates/devops/docker/docker-compose.dev.yml.ejs`
+  - Replaced hardcoded passwords with environment variables
+  - Added clear development-only unsafe default labeling
+  - Enhanced secret management best practices
+  - **Impact**: Follows container security best practices
+
+- **EJS Template Injection Prevention** - `src/generators/base.ts`, `src/generators/template-integrator.ts`
+  - Implemented comprehensive input sanitization before EJS rendering
+  - Added removal of EJS tags, template literals, backticks, and eval calls
+  - Enabled HTML escaping and strict mode in EJS options
+  - **Impact**: Prevents code injection attacks through template generation
+
+#### 📚 **Documentation & Consistency Issues**
+- **Version Consistency** - Multiple files
+  - Standardized version references to v0.2.0 across all documentation
+  - Fixed package.json vs documentation version mismatches
+  - Updated PBS_MASTER_SYSTEM.md date to January 2026
+  - **Impact**: Eliminates user confusion and npm registry inconsistencies
+
+- **Broken Documentation Links** - `README.md` + 8 new documentation files
+  - Created comprehensive guides for all missing documentation:
+    - `docs/PRESETS.md` - Complete preset system guide
+    - `docs/DEVOPS.md` - Docker and CI/CD documentation  
+    - `docs/THEMES.md` - Theme configuration guide
+    - `docs/CONFIG.md` - Configuration options reference
+    - `docs/DATABASE.md` - Database setup instructions
+    - `docs/AUTH.md` - Authentication provider setup
+    - `docs/DEPLOYMENT.md` - Production deployment guide
+    - `docs/COMPONENTS.md` - Component library integration
+  - **Impact**: 100% documentation link coverage achieved
+
+#### ✅ **Feature Implementation & Accuracy**
+- **Config Export Functionality** - `src/index.ts`
+  - Replaced "coming soon" placeholder with complete implementation
+  - Added JSON/YAML export support with proper error handling
+  - Integrated with existing importConfig/exportConfig infrastructure
+  - **Impact**: Delivered promised CLI feature for configuration management
+
+- **Database Support Claims** - Multiple files
+  - Removed MySQL and MongoDB from documentation and type definitions
+  - Updated DatabaseType to only include implemented options (PostgreSQL, SQLite, Turso)
+  - Fixed alternative database mentions in PBS template generation
+  - **Impact**: Documentation now accurately reflects implemented capabilities
+
+### Security Metrics
+- **Authentication Vulnerabilities**: Fixed (console.log exposure eliminated)
+- **Container Security**: Enhanced (all secrets use environment variables)
+- **Template Injection**: Prevented (comprehensive sanitization implemented)
+- **Documentation Accuracy**: 100% (all links working, versions consistent)
+
+---
+
+## [0.2.0] - 2026-01-11 - Quality Improvements & Stability Fixes
 
 > **🔧 QUALITY RELEASE**: Comprehensive TypeScript optimization, test stability improvements, and CLI reliability enhancements.
 

@@ -10,6 +10,41 @@ import { existsSync, mkdirSync } from 'fs';
 import * as ejs from 'ejs';
 import { ProjectConfig, TemplateContext, McpServer, DatabaseType } from '../types';
 
+// Import sanitization function from base.ts
+async function sanitizeForTemplate(obj: any): Promise<any> {
+  if (typeof obj === 'string') {
+    // Remove EJS template syntax that could be used for code injection
+    return obj
+      .replace(/<%[\s\S]*?%>/g, '') // Remove all EJS tags
+      .replace(/\${[\s\S]*?}/g, '') // Remove template literals
+      .replace(/`/g, '') // Remove backticks
+      .replace(/eval\(/g, '') // Remove eval calls
+      .replace(/Function\(/g, '') // Remove Function constructor
+      .replace(/require\(/g, '') // Remove require calls
+      .replace(/process\./g, '') // Remove process references
+      .replace(/global\./g, '') // Remove global references
+      .replace(/module\./g, '') // Remove module references
+      .trim();
+  }
+  
+  if (Array.isArray(obj)) {
+    return Promise.all(obj.map(sanitizeForTemplate));
+  }
+  
+  if (obj && typeof obj === 'object') {
+    const sanitized: any = {};
+    const entries = Object.entries(obj);
+    await Promise.all(entries.map(async ([key, value]) => {
+      // Sanitize both keys and values
+      const sanitizedKey = typeof key === 'string' ? await sanitizeForTemplate(key) : key;
+      sanitized[sanitizedKey] = await sanitizeForTemplate(value);
+    }));
+    return sanitized;
+  }
+  
+  return obj;
+}
+
 /**
  * MCP Server metadata for template generation
  */
@@ -188,7 +223,11 @@ async function generateMcpConfigs(
   const mcpSettingsTemplate = join(templatesDir, 'mcp', 'settings.json.ejs');
   if (existsSync(mcpSettingsTemplate)) {
     const templateContent = await fs.readFile(mcpSettingsTemplate, 'utf-8');
-    const processed = ejs.render(templateContent, context);
+    const processed = ejs.render(templateContent, await sanitizeForTemplate(context), {
+      escape: true, // Enable HTML escaping
+      strict: true, // Enable strict mode
+      compileDebug: false // Disable debug for security
+    });
     const outputPath = join(mcpDir, 'settings.json');
     await fs.writeFile(outputPath, processed, 'utf-8');
     generatedFiles.push(outputPath);
@@ -199,7 +238,11 @@ async function generateMcpConfigs(
     const dbMcpTemplate = join(templatesDir, 'mcp', context.database, 'mcp-config.json.ejs');
     if (existsSync(dbMcpTemplate)) {
       const templateContent = await fs.readFile(dbMcpTemplate, 'utf-8');
-      const processed = ejs.render(templateContent, context);
+      const processed = ejs.render(templateContent, await sanitizeForTemplate(context), {
+      escape: true, // Enable HTML escaping
+      strict: true, // Enable strict mode
+      compileDebug: false // Disable debug for security
+    });
       const outputPath = join(mcpDir, `${context.database}-mcp.json`);
       await fs.writeFile(outputPath, processed, 'utf-8');
       generatedFiles.push(outputPath);
@@ -213,7 +256,11 @@ async function generateMcpConfigs(
     const serverTemplate = join(templatesDir, 'mcp', server, 'mcp-config.json.ejs');
     if (existsSync(serverTemplate)) {
       const templateContent = await fs.readFile(serverTemplate, 'utf-8');
-      const processed = ejs.render(templateContent, context);
+      const processed = ejs.render(templateContent, await sanitizeForTemplate(context), {
+      escape: true, // Enable HTML escaping
+      strict: true, // Enable strict mode
+      compileDebug: false // Disable debug for security
+    });
       const outputPath = join(mcpDir, `${server}-mcp.json`);
       await fs.writeFile(outputPath, processed, 'utf-8');
       generatedFiles.push(outputPath);
@@ -242,7 +289,11 @@ async function generateClaudeCodeConfigs(
   const settingsTemplate = join(templatesDir, 'claude-code', 'settings', 'settings.json.ejs');
   if (existsSync(settingsTemplate)) {
     const templateContent = await fs.readFile(settingsTemplate, 'utf-8');
-    const processed = ejs.render(templateContent, context);
+    const processed = ejs.render(templateContent, await sanitizeForTemplate(context), {
+      escape: true, // Enable HTML escaping
+      strict: true, // Enable strict mode
+      compileDebug: false // Disable debug for security
+    });
     const outputPath = join(claudeDir, 'settings.json');
     await fs.writeFile(outputPath, processed, 'utf-8');
     generatedFiles.push(outputPath);
@@ -260,7 +311,11 @@ async function generateClaudeCodeConfigs(
       const templatePath = join(templatesDir, 'claude-code', 'hooks', hookTemplate);
       if (existsSync(templatePath)) {
         const templateContent = await fs.readFile(templatePath, 'utf-8');
-        const processed = ejs.render(templateContent, context);
+        const processed = ejs.render(templateContent, await sanitizeForTemplate(context), {
+      escape: true, // Enable HTML escaping
+      strict: true, // Enable strict mode
+      compileDebug: false // Disable debug for security
+    });
         const outputPath = join(hooksDir, hookTemplate.replace('.ejs', ''));
         await fs.writeFile(outputPath, processed, 'utf-8');
         await fs.chmod(outputPath, 0o755);
@@ -279,7 +334,11 @@ async function generateClaudeCodeConfigs(
   const agentTemplate = join(templatesDir, 'claude-code', 'agents', 'project-dev.json.ejs');
   if (existsSync(agentTemplate)) {
     const templateContent = await fs.readFile(agentTemplate, 'utf-8');
-    const processed = ejs.render(templateContent, context);
+    const processed = ejs.render(templateContent, await sanitizeForTemplate(context), {
+      escape: true, // Enable HTML escaping
+      strict: true, // Enable strict mode
+      compileDebug: false // Disable debug for security
+    });
     const outputPath = join(agentsDir, `${context.projectName}-dev.json`);
     await fs.writeFile(outputPath, processed, 'utf-8');
     generatedFiles.push(outputPath);
@@ -290,7 +349,11 @@ async function generateClaudeCodeConfigs(
     const dbAgentTemplate = join(templatesDir, 'claude-code', 'agents', 'project-db.json.ejs');
     if (existsSync(dbAgentTemplate)) {
       const templateContent = await fs.readFile(dbAgentTemplate, 'utf-8');
-      const processed = ejs.render(templateContent, context);
+      const processed = ejs.render(templateContent, await sanitizeForTemplate(context), {
+      escape: true, // Enable HTML escaping
+      strict: true, // Enable strict mode
+      compileDebug: false // Disable debug for security
+    });
       // Only write if content is not empty (template has conditional)
       if (processed.trim()) {
         const outputPath = join(agentsDir, `${context.projectName}-db.json`);
@@ -309,7 +372,11 @@ async function generateClaudeCodeConfigs(
   const skillTemplate = join(templatesDir, 'claude-code', 'skills', 'project-dev.json.ejs');
   if (existsSync(skillTemplate)) {
     const templateContent = await fs.readFile(skillTemplate, 'utf-8');
-    const processed = ejs.render(templateContent, context);
+    const processed = ejs.render(templateContent, await sanitizeForTemplate(context), {
+      escape: true, // Enable HTML escaping
+      strict: true, // Enable strict mode
+      compileDebug: false // Disable debug for security
+    });
     const outputPath = join(skillsDir, `${context.projectName}-dev.json`);
     await fs.writeFile(outputPath, processed, 'utf-8');
     generatedFiles.push(outputPath);

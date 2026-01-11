@@ -87,8 +87,38 @@ program
   .description('Export current configuration to file')
   .option('--format <format>', 'Export format (json, yaml)', 'json')
   .option('--output <path>', 'Output file path')
-  .action((projectName) => {
-    console.log(`Config export functionality coming soon for ${projectName}`);
+  .action(async (projectName, options) => {
+    try {
+      // Determine source config path
+      const configPath = getDefaultConfigPath(projectName);
+      
+      if (!existsSync(configPath)) {
+        console.error(pc.red(`Configuration file not found: ${configPath}`));
+        console.log(pc.yellow(`Make sure you're in the correct directory and the project was created with karetech-stack.`));
+        process.exit(1);
+      }
+
+      // Load existing configuration
+      const config = importConfig(configPath);
+      
+      // Determine output path
+      const outputPath = options.output || resolve(process.cwd(), `${projectName}-config.${options.format}`);
+      
+      // Export configuration
+      exportConfig(config, outputPath, { 
+        format: options.format,
+        minify: false 
+      });
+      
+      console.log(pc.green(`✓ Configuration exported successfully!`));
+      console.log(pc.dim(`  Source: ${configPath}`));
+      console.log(pc.dim(`  Output: ${outputPath}`));
+      console.log(pc.dim(`  Format: ${options.format}`));
+      
+    } catch (error) {
+      console.error(pc.red(`Failed to export configuration: ${error instanceof Error ? error.message : 'Unknown error'}`));
+      process.exit(1);
+    }
   });
 
 program.parse();

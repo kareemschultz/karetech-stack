@@ -74,7 +74,6 @@ bunx create-karetech-stack my-app --preset saas
 │  Database:                                  │
 │    ○ PostgreSQL (recommended)               │
 │    ○ SQLite                                 │
-│    ○ MySQL                                  │
 │    ○ Turso                                  │
 │                                             │
 │  Auth Providers:                            │

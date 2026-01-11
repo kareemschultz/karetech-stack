@@ -23,7 +23,7 @@ export type PresetName = 'saas' | 'ecommerce' | 'blog' | 'devtool' | 'portfolio'
 /**
  * Database types that database MCP servers can support
  */
-export type DatabaseType = 'postgresql' | 'turso' | 'sqlite' | 'mysql' | 'mongodb';
+export type DatabaseType = 'postgresql' | 'turso' | 'sqlite';
 
 /**
  * Environment variable configuration for MCP servers

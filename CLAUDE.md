@@ -296,4 +296,4 @@ bun run dev -- my-test-app --preset saas
 ---
 
 *Last Updated: January 2026*  
-*Version: 0.1.0-dev*
+*Version: 0.2.0*

@@ -14,9 +14,9 @@ services:
       - NODE_ENV=development
       - VITE_PORT=5173
       - PORT=3000
-      <% if (database === 'postgresql') { %>- DATABASE_URL=postgresql://postgres:password@postgres:5432/<%= projectName.toLowerCase().replace(/[^a-z0-9]/g, '_') %><% } %>
+      <% if (database === 'postgresql') { %>- DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-CHANGE_ME_dev_only_unsafe}@postgres:5432/<%= projectName.toLowerCase().replace(/[^a-z0-9]/g, '_') %><% } %>
       <% if (database === 'sqlite') { %>- DATABASE_URL=/app/local.db<% } %>
-      <% if (auth.length > 0) { %>- BETTER_AUTH_SECRET=dev-secret-key-change-in-production
+      <% if (auth.length > 0) { %>- BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-CHANGE_ME_dev_only_unsafe_secret}
       - BETTER_AUTH_URL=http://localhost:3000<% } %>
     volumes:
       - .:/app
@@ -35,7 +35,7 @@ services:
     environment:
       - POSTGRES_DB=<%= projectName.toLowerCase().replace(/[^a-z0-9]/g, '_') %>_dev
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-CHANGE_ME_dev_only_unsafe}
     volumes:
       - postgres-dev-data:/var/lib/postgresql/data
     ports:
@@ -48,7 +48,7 @@ services:
     image: dpage/pgadmin4:latest
     environment:
       - PGADMIN_DEFAULT_EMAIL=admin@example.com
-      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD:-CHANGE_ME_dev_only_unsafe}
       - PGADMIN_CONFIG_SERVER_MODE=False
     ports:
       - "5050:80"

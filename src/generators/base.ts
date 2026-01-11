@@ -256,13 +256,56 @@ export function createTemplateContext(config: ProjectConfig): TemplateContext {
 /**
  * Copy template files with EJS processing
  */
+/**
+ * Sanitize template context to prevent EJS template injection attacks
+ * Removes potentially dangerous EJS template syntax from user-provided strings
+ */
+function sanitizeForTemplate(obj: any): any {
+  if (typeof obj === 'string') {
+    // Remove EJS template syntax that could be used for code injection
+    return obj
+      .replace(/<%[\s\S]*?%>/g, '') // Remove all EJS tags
+      .replace(/\${[\s\S]*?}/g, '') // Remove template literals
+      .replace(/`/g, '') // Remove backticks
+      .replace(/eval\(/g, '') // Remove eval calls
+      .replace(/Function\(/g, '') // Remove Function constructor
+      .replace(/require\(/g, '') // Remove require calls
+      .replace(/process\./g, '') // Remove process references
+      .replace(/global\./g, '') // Remove global references
+      .replace(/module\./g, '') // Remove module references
+      .trim();
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeForTemplate);
+  }
+  
+  if (obj && typeof obj === 'object') {
+    const sanitized: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      // Sanitize both keys and values
+      const sanitizedKey = typeof key === 'string' ? sanitizeForTemplate(key) : key;
+      sanitized[sanitizedKey] = sanitizeForTemplate(value);
+    }
+    return sanitized;
+  }
+  
+  return obj;
+}
+
 export async function processTemplate(templatePath: string, outputPath: string, context: TemplateContext): Promise<void> {
   const templateContent = await fs.readFile(templatePath, 'utf-8');
 
-  // Process EJS template
-  const processed = ejs.render(templateContent, context, {
+  // Sanitize context data to prevent template injection
+  const sanitizedContext = sanitizeForTemplate(context);
+
+  // Process EJS template with security options enabled
+  const processed = ejs.render(templateContent, sanitizedContext, {
     filename: templatePath,
-    rmWhitespace: true
+    rmWhitespace: true,
+    escape: true, // Enable HTML escaping by default
+    strict: true, // Enable strict mode for better error handling
+    compileDebug: false // Disable debug compilation for security
   });
 
   // Ensure directory exists

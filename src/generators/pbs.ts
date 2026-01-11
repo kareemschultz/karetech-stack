@@ -1028,7 +1028,7 @@ ${config.auth.includes('github') ? 'GITHUB_CLIENT_ID=your-github-id\nGITHUB_CLIE
 ### ADR-001: Database Choice - ${config.database}
 **Decision**: Use ${config.database} as primary database
 **Rationale**: ${config.database === 'postgresql' ? 'Full-featured relational database with excellent TypeScript integration' : config.database === 'turso' ? 'Edge-optimized SQLite with global distribution capabilities' : 'Simple, reliable, and perfect for development and small-scale applications'}
-**Alternatives Considered**: ${config.database === 'postgresql' ? 'MySQL, SQLite' : config.database === 'turso' ? 'PostgreSQL, MongoDB' : 'PostgreSQL, MySQL'}
+**Alternatives Considered**: ${config.database === 'postgresql' ? 'SQLite, Turso' : config.database === 'turso' ? 'PostgreSQL, SQLite' : 'PostgreSQL, Turso'}
 
 ### ADR-002: Authentication Strategy
 **Decision**: ${config.auth.length > 0 ? `Implement authentication with ${config.auth.join(' + ')}` : 'No authentication required'}
