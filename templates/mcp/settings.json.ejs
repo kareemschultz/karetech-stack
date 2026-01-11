@@ -1,0 +1,57 @@
+<%- JSON.stringify({
+  mcpServers: (function() {
+    var servers = {};
+    if (mcpServers.includes('filesystem')) {
+      servers.filesystem = {
+        command: "npx",
+        args: ["-y", "@modelcontextprotocol/server-filesystem", "."],
+        description: "File system access for " + projectName
+      };
+    }
+    if (mcpServers.includes('github')) {
+      servers.github = {
+        command: "npx",
+        args: ["-y", "@modelcontextprotocol/server-github"],
+        env: {
+          GITHUB_PERSONAL_ACCESS_TOKEN: "${GITHUB_TOKEN}"
+        },
+        description: "GitHub integration for repository operations"
+      };
+    }
+    if (mcpServers.includes('postgres') && database === 'postgresql') {
+      servers.postgres = {
+        command: "npx",
+        args: ["-y", "@modelcontextprotocol/server-postgres"],
+        env: {
+          DATABASE_URL: "${DATABASE_URL}"
+        },
+        description: "PostgreSQL database access and querying"
+      };
+    }
+    if (mcpServers.includes('postgres') && database === 'turso') {
+      servers.turso = {
+        command: "npx",
+        args: ["-y", "@modelcontextprotocol/server-sqlite", "--url", "${TURSO_DATABASE_URL}"],
+        env: {
+          TURSO_AUTH_TOKEN: "${TURSO_AUTH_TOKEN}"
+        },
+        description: "Turso database access via libSQL"
+      };
+    }
+    if (mcpServers.includes('postgres') && database === 'sqlite') {
+      servers.sqlite = {
+        command: "npx",
+        args: ["-y", "@modelcontextprotocol/server-sqlite", "./data/local.db"],
+        description: "SQLite database access"
+      };
+    }
+    if (mcpServers.includes('playwright')) {
+      servers.playwright = {
+        command: "npx",
+        args: ["-y", "@anthropic-ai/mcp-server-playwright"],
+        description: "Browser automation for E2E testing"
+      };
+    }
+    return servers;
+  })()
+}, null, 2) %>

@@ -148,3 +148,22 @@ export interface ValidationContext {
   nodeVersion: string;
   bunVersion: string;
 }
+
+// MCP Server configuration metadata
+export interface McpServerMetadata {
+  name: string;
+  displayName: string;
+  package: string;
+  description: string;
+  requiredEnvVars: string[];
+  capabilities: string[];
+}
+
+// Template integration result
+export interface TemplateIntegrationResult {
+  success: boolean;
+  filesGenerated: string[];
+  mcpServersConfigured: McpServer[];
+  warnings: string[];
+  errors: string[];
+}
