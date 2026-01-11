@@ -1,0 +1,21 @@
+{
+  "componentLibrary": "headless-ui",
+  "version": "latest", 
+  "description": "Headless UI component library configuration",
+  "dependencies": {
+    "@headlessui/react": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/headlessui__react": "^2.0.0"
+  },
+  "config": {
+    "tailwind": {
+      "plugins": ["@headlessui/tailwindcss"]
+    },
+    "typescript": {
+      "paths": {
+        "@/components/ui/*": ["./src/components/ui/*"]
+      }
+    }
+  }
+}
