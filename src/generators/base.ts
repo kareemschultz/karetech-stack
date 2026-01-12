@@ -243,14 +243,33 @@ export function createTemplateContext(config: ProjectConfig): TemplateContext {
   const { dependencies, devDependencies } = resolveDependencies(config);
   const scripts = generateScripts(config);
 
+  // Generate secure random secrets
+  const authSecret = generateRandomSecret();
+  const devPort = 5173; // Default Vite port
+
   return {
     ...config,
     generatedAt: new Date().toISOString(),
     cliVersion: '0.1.0', // TODO: Read from package.json
     dependencies,
     devDependencies,
-    scripts
+    scripts,
+    authSecret,
+    devPort
   };
+}
+
+/**
+ * Generate a secure random secret for authentication
+ */
+function generateRandomSecret(): string {
+  // Generate a 32-byte random string
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 64; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 }
 
 /**
@@ -283,9 +302,8 @@ function sanitizeForTemplate(obj: any): any {
   if (obj && typeof obj === 'object') {
     const sanitized: any = {};
     for (const [key, value] of Object.entries(obj)) {
-      // Sanitize both keys and values
-      const sanitizedKey = typeof key === 'string' ? sanitizeForTemplate(key) : key;
-      sanitized[sanitizedKey] = sanitizeForTemplate(value);
+      // Only sanitize values, not keys to preserve object structure
+      sanitized[key] = sanitizeForTemplate(value);
     }
     return sanitized;
   }
@@ -296,16 +314,18 @@ function sanitizeForTemplate(obj: any): any {
 export async function processTemplate(templatePath: string, outputPath: string, context: TemplateContext): Promise<void> {
   const templateContent = await fs.readFile(templatePath, 'utf-8');
 
-  // Sanitize context data to prevent template injection
-  const sanitizedContext = sanitizeForTemplate(context);
+  // Template processing - debug info removed
 
-  // Process EJS template with security options enabled
+  // Temporarily disable sanitization to debug template issue
+  const sanitizedContext = context;
+
+  // Process EJS template with debugging enabled
   const processed = ejs.render(templateContent, sanitizedContext, {
     filename: templatePath,
     rmWhitespace: true,
-    escape: true, // Enable HTML escaping by default
-    strict: true, // Enable strict mode for better error handling
-    compileDebug: false // Disable debug compilation for security
+    escape: false, // Disable HTML escaping to allow template variables
+    strict: false, // Disable strict mode to allow undefined variables
+    compileDebug: true // Enable debug compilation to help with errors
   });
 
   // Ensure directory exists

@@ -1,6 +1,6 @@
 {
   "name": "create-karetech-stack",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Enhanced Better-T-Stack scaffold with AI-ready structure, testing, and DevOps built-in. Create production-ready TypeScript full-stack apps in 2 minutes.",
   "type": "module",
   "bin": {

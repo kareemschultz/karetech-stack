@@ -44,6 +44,22 @@ graph LR
 
 **With KareTech Stack:**
 
+```bash
+# Gold Standard - Complete explicit configuration
+bun create karetech-stack@latest my-app \
+  --frontend tanstack-router \
+  --backend hono \
+  --database postgres \
+  --auth email,github \
+  --theme maia \
+  --testing playwright \
+  --docker \
+  --pbs full \
+  --yolo
+
+# ⚡ 2 minutes later: Production-ready app!
+```
+
 ```mermaid
 graph LR
     A[🚀 KareTech CLI] --> B[⚡ 2 Minutes]
@@ -75,18 +91,39 @@ graph LR
 
 ## 🚀 **Quick Start**
 
-### One-Line Install
+### Three Ways to Create Projects
 
 ```bash
-# 🎨 Interactive wizard (recommended)
-bunx create-karetech-stack my-awesome-app
+# 🚀 YOLO MODE - Use all defaults, be fast and bold!
+bunx create-karetech-stack my-app --yolo
 
-# ⚡ Skip questions with preset
+# 🎯 EXPLICIT MODE - Better-T-Stack style with all parameters
+bunx create-karetech-stack my-app \
+  --frontend tanstack-router \
+  --backend hono \
+  --database postgres \
+  --auth email,github \
+  --theme maia \
+  --testing playwright \
+  --docker \
+  --pbs full \
+  --claude-hooks
+
+# 🎨 INTERACTIVE MODE - Beautiful wizard (recommended for beginners)
+bunx create-karetech-stack my-app
+
+# ⚡ PRESET MODE - Quick start with presets
 bunx create-karetech-stack my-saas --preset saas
-
-# 🛠️ Custom configuration
-bunx create-karetech-stack my-app --preset saas --theme maia --color blue
 ```
+
+### Available Parameters
+
+| **Core Stack** | **Design** | **DevOps** | **AI Workflow** |
+|----------------|------------|------------|------------------|
+| `--frontend` tanstack-router, next, react | `--theme` maia, nova, lyra, vega, mira | `--docker` | `--pbs` full, docs, minimal |
+| `--backend` hono, express, fastify | `--color` blue, green, purple, red | `--cicd` github-actions | `--claude-hooks` |
+| `--database` postgres, sqlite, turso | `--font` figtree, inter, geist | `--web-deploy` vercel, netlify | `--beads` |
+| `--auth` email, github, google, discord | `--icons` hugeicons, lucide | `--testing` playwright, vitest | `--mcp` filesystem, github |
 
 ### Start Developing
 

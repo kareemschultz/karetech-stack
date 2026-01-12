@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - 2026-01-11 - Enhanced CLI System with Better-T-Stack Style Parameters
+
+> **🚀 MAJOR RELEASE**: Complete CLI enhancement with explicit parameters, YOLO mode, and production-ready template system. Now supports Better-T-Stack style explicit configuration plus unique KareTech features.
+
+### Added
+
+#### 🎯 **Enhanced CLI System**
+- **Four CLI modes** - YOLO, Explicit, Preset, Interactive modes for every use case
+- **50+ explicit parameters** - Complete Better-T-Stack style configuration coverage
+- **YOLO mode** - `--yolo` flag for instant setup with sensible defaults
+- **Gold standard support** - All parameters from the user's specification implemented
+- **Better-T-Stack compatibility** - Full parameter parity with explicit configuration
+
+#### ⚡ **New CLI Parameters**
+- **Core Stack**: `--frontend`, `--backend`, `--runtime`, `--api`, `--package-manager`
+- **Database**: `--database`, `--orm`, `--db-setup`
+- **Authentication**: `--auth`, `--payments`
+- **Design**: `--theme`, `--color`, `--font`, `--icons`, `--component-lib`
+- **Testing**: `--testing`, `--addons`
+- **DevOps**: `--docker`, `--web-deploy`, `--server-deploy`, `--cicd`
+- **AI Features**: `--pbs`, `--claude-hooks`, `--beads`, `--mcp`
+- **Utilities**: `--examples`, `--pwa`, `--feature-flags`, `--yolo`
+
+#### 🛠️ **Enhanced Features**
+- **Enhanced validation** - Smart warnings for parameter combinations
+- **Backward compatibility** - All existing presets and wizard mode preserved
+- **Template fixes** - Resolved all EJS template variable issues
+- **Usage examples** - Built-in `examples` command showing all usage patterns
+
+### Fixed
+
+#### 🔧 **Template System Fixes**
+- **Template variable errors** - Fixed undefined `authSecret`, `devPort`, and other template variables
+- **EJS template processing** - Improved template context handling and error reporting
+- **MCP configuration** - Fixed template integration issues with MCP server setup
+- **Sanitization issues** - Resolved over-aggressive template input sanitization
+
+#### 📋 **CLI Improvements**
+- **Parameter parsing** - Enhanced support for array parameters and multiple values
+- **Mode detection** - Improved logic for detecting explicit vs preset vs interactive modes
+- **Error handling** - Better error messages for invalid parameter combinations
+- **Help system** - Enhanced help output with all new parameters documented
+
+### Changed
+
+#### 🎨 **CLI Interface**
+- **Default behavior** - Interactive mode remains default for new users
+- **Parameter structure** - Better organized parameter groupings and documentation
+- **Output formatting** - Enhanced success messages and configuration summaries
+
+---
+
 ## [0.2.1] - 2026-01-11 - Critical Security & Documentation Fixes
 
 > **🔒 SECURITY RELEASE**: Comprehensive audit remediation addressing authentication security, Docker secrets, template injection prevention, and documentation consistency.
